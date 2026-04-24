@@ -1,0 +1,17 @@
+# Ignore Primus local testing logs
+*.log
+/Logs/
+/Temp/
+
+# Ignore Windows system junk files
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+desktop.ini
+
+# Ignore IDE / Editor files (if you use VS Code or Sublime)
+.vscode/
+*.sublime-workspace
+*.sublime-project
