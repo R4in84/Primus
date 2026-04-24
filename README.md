@@ -5,7 +5,7 @@
 [![Version](https://img.shields.io/badge/Version-1.0-success)](https://github.com/R4in84/Primus/releases)
 [![Batch Script](https://img.shields.io/badge/Language-Batch-4EAA25?logo=windowsterminal)](https://en.wikipedia.org/wiki/Batch_file)
 
-> Primus is a A command-line system maintenance utility for Windows 10/11 designed to consolidate common system maintenance, cleanup, and repair tasks into a single, easy-to-use interface with intelligent safety protocols and comprehensive logging.
+> Primus is a command-line system maintenance utility for Windows 10/11 designed to consolidate common system maintenance, cleanup, and repair tasks into a single, easy-to-use interface with intelligent safety protocols and comprehensive logging.
 
 > It utilizes native Windows tools (such as SFC, DISM, and PowerShell WMI) to help maintain system health and resolve common operating system or network issues.
 
