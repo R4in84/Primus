@@ -9,7 +9,7 @@
 
 > It utilizes native Windows tools (such as SFC, DISM, and PowerShell WMI) to help maintain system health and resolve common operating system or network issues.
 
-https://raw.githubusercontent.com/R4in84/Primus/refs/heads/main/Media/Main.png
+![Primus Main Menu](Media/Main.png)
 
 ---
 
