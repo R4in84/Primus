@@ -2,6 +2,44 @@
 
 All notable changes to Primus will be documented in this file.
 
+## [1.0.1] - 2026-04-28
+
+### ✨ New Features
+
+**Automatic Update Checker**
+- ✅ GitHub API integration checks for new releases on startup
+- ✅ Non-blocking 3-second timeout (won't freeze if offline)
+- ✅ Semantic version comparison (v1.0.1 vs v1.0.2)
+- ✅ Visual alert with download link when updates available
+
+**Space Reclamation Tracking**
+- ✅ Real-time disk space display after each cleanup operation
+- ✅ Cumulative session total across all operations
+- ✅ Dual-mode calculation (Global vs Precision)
+- ✅ Session summary on exit
+- ✅ Auto-scaling units (KB → MB → GB)
+
+**Extended Browser Support**
+- ✅ Added Thorium Browser (Chromium-based)
+- ✅ Added Helium Browser (Chromium-based)
+- ✅ Added Floorp Browser (Firefox fork)
+- ✅ Added Zen Browser (Firefox fork with dual path support)
+- ✅ **Total: 14 browsers now supported**
+
+**Enhanced Exit Summary**
+- ✅ Session duration tracking (start time → end time)
+- ✅ Total space reclaimed this session
+- ✅ Log file path display
+- ✅ Professional summary footer in console
+- ✅ Session recap appended to log file
+
+### 🔧 Technical Improvements
+
+- Intelligent version comparison using semantic versioning
+- Graceful API timeout handling for offline scenarios
+- Session statistics persisted to log files
+- Improved PowerShell variable handling in space tracking
+
 ---
 
 ## [1.0.0] - 2026-04-24
