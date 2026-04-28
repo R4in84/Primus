@@ -128,9 +128,8 @@ A command-line system maintenance utility... for Windows 10/11 with intelligent 
 
 ## [Unreleased]
 
-### 🚀 Planned Features
-- 🔄 Automatic update checker (GitHub Releases API)
-- 🌍 Extended browser support 
+### 🚀 Planned for Future Versions
+- 🆕 New Category & Functions
 
 ---
 
