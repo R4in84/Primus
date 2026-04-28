@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D4?logo=windows)](https://www.microsoft.com/windows)
-[![Version](https://img.shields.io/badge/Version-1.0-success)](https://github.com/R4in84/Primus/releases)
+[![Version](https://img.shields.io/badge/Version-1.0.1-success)](https://github.com/R4in84/Primus/releases)
 [![Batch Script](https://img.shields.io/badge/Language-Batch-4EAA25?logo=windowsterminal)](https://en.wikipedia.org/wiki/Batch_file)
 
 > Primus is a command-line system maintenance utility for Windows 10/11 designed to consolidate common system maintenance, cleanup, and repair tasks into a single, easy-to-use interface with intelligent safety protocols and comprehensive logging.
@@ -19,6 +19,7 @@
 - ✅ Create manual System Restore Points with VSS
 - ✅ Intelligent Shadow Copy cleanup (keeps most recent)
 - ✅ Automatic disk space validation before operations
+- ✅ **[NEW]** Real-time space reclamation tracking
 
 ### **System Maintenance**
 - ✅ Deep cleanup of temporary files (User + System)
@@ -28,11 +29,12 @@
 - ✅ Recycle Bin purge (all drives)
 - ✅ Native Disk Cleanup integration
 - ✅ Icon cache rebuild (fixes broken icons)
-- ✅ **Multi-browser cache purge** (Chrome, Edge, Firefox, Brave, Opera, Arc, Vivaldi, LibreWolf, Waterfox)
+- ✅ **Multi-browser cache purge** (14 browsers: Chrome, Edge, Firefox, Brave, Opera, Arc, Vivaldi, LibreWolf, Waterfox, **Thorium, Helium, Floorp, Zen**)
 - ✅ Windows Store cache reset
 - ✅ WinSxS Component Store cleanup (Standard + Deep modes)
 - ✅ Crash dump and error report cleanup
 - ✅ Event log clearing
+- ✅ **[NEW]** Cumulative session space tracking across all operations
 
 ### **Network Optimization**
 - ✅ DNS cache display/flush
@@ -46,6 +48,12 @@
 - ✅ DISM Image Health Check (Quick)
 - ✅ DISM Deep Image Scan
 - ✅ DISM Restore Health (automatic repair)
+
+### **User Experience** ✨ *New in v1.0.1*
+- ✅ **Automatic update checker** (GitHub API integration)
+- ✅ **Real-time space reclamation display** after each cleanup
+- ✅ **Session summary on exit** (duration + total space freed)
+- ✅ **Enhanced logging** with session statistics
 
 ---
 
@@ -61,6 +69,7 @@
 | **Session Logging** | Every action is logged with timestamp and categorization |
 | **Safe Mode Detection** | Displays boot status in header for awareness |
 | **LTSC/Server Guards** | Warns when attempting incompatible operations |
+| **Update Notifications** | Checks for new releases on startup (non-blocking) |
 
 ---
 
@@ -73,6 +82,7 @@
 | **PowerShell** | Version 5.1 or higher (pre-installed on modern Windows) |
 | **Disk Space** | Minimum 2GB free for repair operations |
 | **Architecture** | x64 or ARM64 (tested on x64) |
+| **Internet** | Optional (for update checking only) |
 
 ---
 
