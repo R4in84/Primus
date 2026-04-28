@@ -1,7 +1,7 @@
 @echo off
 :: ===========================================================================
 :: P R I M U S  -  S Y S T E M   U T I L I T Y
-:: Version 1.0 (Build 20260424)
+:: Version 1.0.1 (Build 20260428)
 :: Repository: https://github.com/R4in84/Primus
 :: ===========================================================================
 :: Copyright (c) 2026 Chris Martin
@@ -32,8 +32,11 @@ if errorlevel 1 (echo [SYSTEM] Requesting elevated privileges... & powershell -N
 setlocal EnableDelayedExpansion
 
 :: Version Information
-set "PRIMUS_VERSION=1.0"
-set "PRIMUS_BUILD=20260424"
+set "PRIMUS_VERSION=1.0.1"
+set "PRIMUS_BUILD=20260428"
+
+:: Initialize Session Variables
+set "SESSION_TOTAL_BYTES=0"
 
 :: Define Window Size: 90 Columns, 34 Lines
 mode con: cols=90 lines=34
@@ -69,9 +72,9 @@ set "BOOT_STATUS=Normal Boot"
 if defined SAFEBOOT_OPTION set "BOOT_STATUS=Safe Mode"
 
 :: Create fixed-width strings for perfect column alignment (30 characters wide)
-set "USER_STR=USER: %USERNAME%                              "
-set "UPTIME_STR=UPTIME: !SYS_UPTIME!                              "
-set "TIME_STR=SESSION: !CURRENT_TIME!                             "
+set "USER_STR=USER: %USERNAME%                               "
+set "UPTIME_STR=UPTIME: !SYS_UPTIME!                               "
+set "TIME_STR=SESSION: !CURRENT_TIME!                              "
 
 :: ---------------------------------------------------------------------------
 :: INITIALIZE LOGGING SYSTEM
@@ -153,6 +156,8 @@ echo           =================================================================
 echo                         Initialising Primus v!PRIMUS_VERSION! System Utility...
 echo           ======================================================================
 timeout /t 2 >nul
+
+call :CHECK_UPDATES
 
 :: ---------------------------------------------------------------------------
 :: MAIN DASHBOARD
@@ -374,6 +379,7 @@ if !errorlevel! neq 0 (echo. & echo  [ INFO ] Operation cancelled. Returning to 
 
 echo.
 call :LOG "PROCESS" "RECOVERY" "Initiating purge of old Shadow Copies..."
+call :TRACK_SPACE_START
 echo  [ PROCESS ] Identifying VSS Shadow Copies via WMI...
 echo  [ INFO ] Only the most recent copy will be preserved.
 echo.
@@ -391,6 +397,7 @@ powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command ^
     "  Write-Host '  [ STATUS ] Cleanup complete.' -ForegroundColor Green; " ^
     "} else { Write-Host '  [ INFO ] Valid limit reached. Skipping.' -ForegroundColor Cyan; }"
 
+call :TRACK_SPACE_END
 call :LOG "SUCCESS" "RECOVERY" "Shadow Copy cleanup operation completed."
 echo.
 pause
@@ -400,10 +407,12 @@ goto :MENU
 cls
 echo.
 call :LOG "PROCESS" "MAINTENANCE" "Initiating comprehensive Temp file cleanup..."
+call :TRACK_SPACE_START "%temp%|%WINDIR%\Temp"
 echo  [ PROCESS ] Purging User Temp folder...
 call :PURGE_DIR "%temp%"
 echo  [ PROCESS ] Purging Windows System Temp...
 call :PURGE_DIR "%WINDIR%\Temp"
+call :TRACK_SPACE_END
 echo  [ STATUS ] Comprehensive Temp cleanup complete (In-use files bypassed).
 echo.
 call :LOG "SUCCESS" "MAINTENANCE" "Temp file cleanup cycle complete."
@@ -415,8 +424,10 @@ cls
 echo.
 call :LOG "PROCESS" "MAINTENANCE" "Initiating Prefetch directory cleanup..."
 echo  [ INFO ] On very old HDD systems, this may temporarily increase boot time slightly.
+call :TRACK_SPACE_START "%WINDIR%\Prefetch"
 echo  [ PROCESS ] Clearing Prefetch directory...
 del /q /s /f /a "%WINDIR%\Prefetch\*.*" >nul 2>&1
+call :TRACK_SPACE_END
 echo  [ STATUS ] Cleanup cycle complete (In-use files bypassed).
 echo.
 call :LOG "SUCCESS" "MAINTENANCE" "Prefetch cache cleared."
@@ -427,6 +438,7 @@ goto :SUB_MAINT_GEN
 cls
 echo.
 call :LOG "PROCESS" "MAINTENANCE" "Initiating Windows Update Cache reset..."
+call :TRACK_SPACE_START "%WINDIR%\SoftwareDistribution\Download"
 echo  [ PROCESS ] Halting Windows Update Services...
 net stop wuauserv /y >nul 2>&1
 net stop bits /y >nul 2>&1
@@ -435,6 +447,7 @@ call :PURGE_DIR "%WINDIR%\SoftwareDistribution\Download"
 echo  [ PROCESS ] Restarting Services...
 net start wuauserv >nul 2>&1
 net start bits >nul 2>&1
+call :TRACK_SPACE_END
 echo  [ STATUS ] Windows Update cache reset.
 echo.
 call :LOG "SUCCESS" "MAINTENANCE" "Windows Update Download Cache successfully cleared."
@@ -445,8 +458,10 @@ goto :SUB_MAINT_GEN
 cls
 echo.
 call :LOG "PROCESS" "MAINTENANCE" "Initiating Windows Thumbnail Cache cleanup..."
+call :TRACK_SPACE_START
 echo  [ PROCESS ] Purging Windows Thumbnail Cache...
 del /q /f "%LocalAppData%\Microsoft\Windows\Explorer\thumbcache_*.db" >nul 2>&1
+call :TRACK_SPACE_END
 echo  [ STATUS ] Thumbnail cache cleanup cycle complete.
 echo.
 call :LOG "SUCCESS" "MAINTENANCE" "Thumbnail Cache database purged."
@@ -462,8 +477,10 @@ if !errorlevel! neq 0 (echo. & echo  [ INFO ] Operation cancelled. Returning to 
 
 echo.
 call :LOG "PROCESS" "MAINTENANCE" "Emptying system recycle bins..."
+call :TRACK_SPACE_START
 echo  [ PROCESS ] Emptying all system recycle bins across all drives...
 powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Clear-RecycleBin -Force -ErrorAction SilentlyContinue"
+call :TRACK_SPACE_END
 echo  [ STATUS ] Operations dispatched to all connected drives.
 echo.
 call :LOG "SUCCESS" "MAINTENANCE" "Recycle Bins emptied successfully."
@@ -499,10 +516,12 @@ for %%i in (A B C D E F G H I J K L M N O P Q R S T U V W X Y Z) do if /i "!targ
 if not exist "!target_drive!:\" (echo. & echo             [ ERROR ] Drive !target_drive!: was not found or is inaccessible. & echo             [ INFO ] Please enter a valid drive letter from the list above. & echo. & goto :DRIVE_INPUT)
 
 echo.
+call :TRACK_SPACE_START
 echo  [ PROCESS ] Launching CleanMgr GUI for Drive !target_drive!:...
 echo  [ INFO ] Script will resume once Cleanup is closed.
 echo.
 start /wait cleanmgr /d !target_drive!
+call :TRACK_SPACE_END
 echo.
 echo  [ STATUS ] Disk Cleanup Utility session terminated.
 echo.
@@ -522,6 +541,7 @@ if !errorlevel! neq 0 (echo. & echo  [ INFO ] Operation cancelled. Returning to 
 
 echo.
 call :LOG "PROCESS" "MAINTENANCE" "Initiating Windows Explorer Restart ^& Icon Cache Rebuild..."
+call :TRACK_SPACE_START
 echo  [ PROCESS ] Terminating Windows Explorer...
 taskkill /f /im explorer.exe >nul 2>&1
 
@@ -531,6 +551,7 @@ del /f /s /q /a "%LocalAppData%\Microsoft\Windows\Explorer\thumbcache_*.db" >nul
 
 echo  [ PROCESS ] Restarting Windows Explorer...
 start explorer.exe
+call :TRACK_SPACE_END
 
 echo.
 echo  [ STATUS ] Icon and Thumbnail databases have been successfully reset.
@@ -543,14 +564,17 @@ goto :SUB_MAINT_ADV
 cls
 echo.
 echo  [ WARNING ] BROWSERS MUST BE CLOSED TO PERFORM A DEEP CLEAN.
-echo  [ INFO ] Targeted: Chrome, Edge, Brave, Vivaldi, Opera, Arc, Firefox, LibreWolf, Waterfox.
+echo  [ INFO ] Targeted: Chrome, Edge, Brave, Vivaldi, Opera, Arc, Thorium, Helium, Firefox, LibreWolf, Waterfox, Floorp, Zen.
 call :ASK_CONFIRM "Proceed with Deep Clean?"
 if !errorlevel! neq 0 (echo. & echo  [ INFO ] Operation cancelled. Returning to sub-menu... & call :LOG "WARNING" "MAINTENANCE" "User cancelled Browser Deep Clean." & timeout /t 1 >nul & goto :SUB_MAINT_ADV)
 
 echo.
 call :LOG "PROCESS" "MAINTENANCE" "Initiating Browser Deep Clean..."
+call :TRACK_SPACE_START
 echo  [ PROCESS ] Halting all browser background processes...
-powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Get-Process 'chrome','msedge','brave','opera','vivaldi','Arc','firefox','librewolf','waterfox' -ErrorAction SilentlyContinue | Stop-Process -Force"
+powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Get-Process 'chrome','msedge','brave','opera','vivaldi','Arc','thorium','helium','firefox','librewolf','waterfox','floorp','zen' -ErrorAction SilentlyContinue | Stop-Process -Force"
+
+:: --- CHROMIUM-BASED BROWSERS ---
 
 :: 1. Google Chrome
 if exist "%LocalAppData%\Google\Chrome\User Data" (echo  [ PROCESS ] Cleaning Google Chrome... & call :CLEAN_CHROMIUM "%LocalAppData%\Google\Chrome\User Data")
@@ -573,14 +597,31 @@ if exist "%LocalAppData%\Opera Software\Opera GX Stable" (echo  [ PROCESS ] Clea
 :: 7. Arc Browser (Special MSIX Path)
 for /d %%A in ("%LocalAppData%\Packages\TheBrowserCompany.Arc_*") do if exist "%%A\LocalCache\Local\Arc\User Data\" (echo  [ PROCESS ] Cleaning Arc Browser... & call :CLEAN_CHROMIUM "%%A\LocalCache\Local\Arc\User Data")
 
-:: 8. Mozilla Firefox
+:: 8. Thorium Browser
+if exist "%LocalAppData%\Thorium\User Data" (echo  [ PROCESS ] Cleaning Thorium Browser... & call :CLEAN_CHROMIUM "%LocalAppData%\Thorium\User Data")
+
+:: 9. Helium Browser
+if exist "%LocalAppData%\imput\Helium\User Data" (echo  [ PROCESS ] Cleaning Helium Browser... & call :CLEAN_CHROMIUM "%LocalAppData%\imput\Helium\User Data")
+
+:: --- FIREFOX/GECKO-BASED BROWSERS ---
+
+:: 10. Mozilla Firefox
 if exist "%LocalAppData%\Mozilla\Firefox\Profiles" (echo  [ PROCESS ] Cleaning Mozilla Firefox... & call :CLEAN_GECKO "%LocalAppData%\Mozilla\Firefox\Profiles")
 
-:: 9. LibreWolf
+:: 11. LibreWolf
 if exist "%LocalAppData%\librewolf\Profiles" (echo  [ PROCESS ] Cleaning LibreWolf... & call :CLEAN_GECKO "%LocalAppData%\librewolf\Profiles")
 
-:: 10. Waterfox
+:: 12. Waterfox
 if exist "%LocalAppData%\Waterfox\Profiles" (echo  [ PROCESS ] Cleaning Waterfox... & call :CLEAN_GECKO "%LocalAppData%\Waterfox\Profiles")
+
+:: 13. Floorp Browser
+if exist "%LocalAppData%\Floorp\Profiles" (echo  [ PROCESS ] Cleaning Floorp Browser... & call :CLEAN_GECKO "%LocalAppData%\Floorp\Profiles")
+
+:: 14. Zen Browser (Checks both common profile directory variations)
+if exist "%LocalAppData%\zen\Profiles" (echo  [ PROCESS ] Cleaning Zen Browser... & call :CLEAN_GECKO "%LocalAppData%\zen\Profiles")
+if exist "%LocalAppData%\ZenBrowser\Profiles" (echo  [ PROCESS ] Cleaning Zen Browser... & call :CLEAN_GECKO "%LocalAppData%\ZenBrowser\Profiles")
+
+call :TRACK_SPACE_END
 
 echo.
 echo  [ STATUS ] Browser Deep Clean cycle complete.
@@ -611,6 +652,7 @@ if !errorlevel! equ 0 (
 )
 
 call :LOG "PROCESS" "MAINTENANCE" "Resetting Windows Store Cache (wsreset)..."
+call :TRACK_SPACE_START
 echo  [ PROCESS ] Resetting Windows Store Cache...
 echo  [ INFO ] The Microsoft Store will open when complete.
 echo  [ INFO ] Applying 120-second timeout safeguard...
@@ -623,7 +665,7 @@ powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command ^
 
 set "WS_ERR=!errorlevel!"
 if !WS_ERR! neq 0 (taskkill /f /im wsreset.exe >nul 2>&1 & echo  [ WARNING ] Operation timed out and was force-closed. & call :LOG "WARNING" "MAINTENANCE" "wsreset.exe hung and was terminated after 120s.")
-if !WS_ERR! equ 0 (echo  [ STATUS ] Windows Store Cache successfully reset. & call :LOG "SUCCESS" "MAINTENANCE" "Windows Store Cache reset completed.")
+if !WS_ERR! equ 0 (call :TRACK_SPACE_END & echo  [ STATUS ] Windows Store Cache successfully reset. & call :LOG "SUCCESS" "MAINTENANCE" "Windows Store Cache reset completed.")
 echo.
 pause
 goto :SUB_MAINT_ADV
@@ -651,11 +693,13 @@ goto :WINSXS_SUB_PROMPT
 :W_STANDARD
 echo.
 call :LOG "PROCESS" "MAINTENANCE" "Initiating Standard DISM Component Store Cleanup..."
+call :TRACK_SPACE_START
 echo  [ PROCESS ] Initiating Standard Component Cleanup...
 dism /online /cleanup-image /StartComponentCleanup
 
 set "DISM_ERR=!errorlevel!"
 echo.
+if !DISM_ERR! equ 0 call :TRACK_SPACE_END
 call :EVAL_STATUS !DISM_ERR! "MAINTENANCE" "Standard Component Store Cleanup failed." "Standard Component Store Cleanup successfully dispatched."
 pause
 goto :SUB_MAINT_ADV
@@ -669,6 +713,7 @@ if !errorlevel! neq 0 (echo. & echo  [ INFO ] Operation cancelled. Returning to 
 
 echo.
 call :LOG "PROCESS" "MAINTENANCE" "Initiating Deep WinSxS Base Reset..."
+call :TRACK_SPACE_START
 echo  [ PROCESS ] Phase 1: Initiating Component Cleanup...
 dism /online /cleanup-image /StartComponentCleanup
 
@@ -681,7 +726,7 @@ dism /online /cleanup-image /StartComponentCleanup /ResetBase
 
 set "DISM_ERR=!errorlevel!"
 if !DISM_ERR! neq 0 (echo. & echo  [ WARNING ] Phase 2 bypassed. This usually occurs if a restart is pending. & call :LOG "WARNING" "MAINTENANCE" "ResetBase bypassed (pending restart likely).")
-if !DISM_ERR! equ 0 (echo. & echo  [ STATUS ] Component Store fully optimized and rollback base reset. & call :LOG "SUCCESS" "MAINTENANCE" "Deep WinSxS Base Reset completed successfully.")
+if !DISM_ERR! equ 0 (call :TRACK_SPACE_END & echo. & echo  [ STATUS ] Component Store fully optimized and rollback base reset. & call :LOG "SUCCESS" "MAINTENANCE" "Deep WinSxS Base Reset completed successfully.")
 pause
 goto :SUB_MAINT_ADV
 
@@ -695,9 +740,11 @@ if !errorlevel! neq 0 (echo. & echo  [ INFO ] Operation cancelled. Returning to 
 
 echo.
 call :LOG "PROCESS" "MAINTENANCE" "Purging Error Reports and Minidumps..."
+call :TRACK_SPACE_START "%ProgramData%\Microsoft\Windows\WER|%WINDIR%\Minidump"
 echo  [ PROCESS ] Purging Windows Error Reporting (WER) and Minidumps...
 call :PURGE_DIR "%ProgramData%\Microsoft\Windows\WER"
 call :PURGE_DIR "%WINDIR%\Minidump"
+call :TRACK_SPACE_END
 echo  [ STATUS ] Crash dumps and error reports successfully cleared.
 echo.
 call :LOG "SUCCESS" "MAINTENANCE" "Crash Dumps and WER cleared."
@@ -713,8 +760,10 @@ if !errorlevel! neq 0 (echo. & echo  [ INFO ] Operation cancelled. Returning to 
 
 echo.
 call :LOG "PROCESS" "MAINTENANCE" "Clearing all Windows Event Viewer Logs..."
+call :TRACK_SPACE_START
 echo  [ PROCESS ] Clearing Windows Event Viewer Logs...
 for /f "tokens=*" %%A in ('wevtutil.exe el') do wevtutil.exe cl "%%A" >nul 2>&1
+call :TRACK_SPACE_END
 echo  [ STATUS ] All Event Viewer logs have been successfully flushed.
 echo.
 call :LOG "SUCCESS" "MAINTENANCE" "Event Viewer Logs flushed successfully."
@@ -1080,6 +1129,27 @@ exit /b
 :: ---------------------------------------------------------------------------
 :: GLOBAL LOGIC ENGINES
 :: ---------------------------------------------------------------------------
+:CHECK_UPDATES
+:: Actively queries GitHub API with a 3-second timeout to prevent script freezing if offline.
+powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command ^
+    "try { " ^
+    "  $latest = (Invoke-RestMethod -Uri 'https://api.github.com/repos/r4in84/primus/releases/latest' -TimeoutSec 3 -ErrorAction Stop).tag_name; " ^
+    "  if ($latest) { " ^
+    "    $rStr = $latest.ToLower().Replace('v', ''); " ^
+    "    $lStr = '%PRIMUS_VERSION%'.ToLower().Replace('v', ''); " ^
+    "    if ([version]$rStr -gt [version]$lStr) { " ^
+    "      Write-Host ''; " ^
+    "      Write-Host '  [ ALERT ] ' -NoNewline -ForegroundColor DarkYellow; " ^
+    "      Write-Host 'A new version of Primus is available ' -NoNewline; " ^
+    "      Write-Host \"($latest) \" -NoNewline -ForegroundColor Green; " ^
+    "      Write-Host 'https://github.com/R4in84/Primus/releases/latest' -ForegroundColor Cyan; " ^
+    "      Write-Host ''; " ^
+    "      Start-Sleep -Seconds 3; " ^
+    "    } " ^
+    "  } " ^
+    "} catch { }"
+exit /b
+
 :ASK_CONFIRM
 set "confirm_ans="
 set /p "confirm_ans= [ CONFIRM ] %~1 (Y/N) :> "
@@ -1117,6 +1187,41 @@ if !errorlevel! equ 1 (
 )
 exit /b 0
 
+:TRACK_SPACE_START
+set "TRACK_TARGET=%~1"
+if "%~1"=="" (
+    :: MODE: GLOBAL
+    set "TRACK_MODE=GLOBAL"
+    for /f "delims=" %%A in ('powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "[long]([System.IO.DriveInfo]'%SystemDrive%\').AvailableFreeSpace"') do set "SPACE_BEFORE=%%A"
+) else (
+    :: MODE: PRECISION
+    set "TRACK_MODE=FOLDER"
+    for /f "delims=" %%A in ('powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$paths = $env:TRACK_TARGET.Split([char]124); [long]$total = 0; foreach($p in $paths){ if(Test-Path -LiteralPath $p){ $sum = (Get-ChildItem -LiteralPath $p -Recurse -File -Force -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum; if($sum) { $total += [long]$sum } } }; $total"') do set "SPACE_BEFORE=%%A"
+)
+set "SPACE_BEFORE=%SPACE_BEFORE: =%"
+exit /b
+
+:TRACK_SPACE_END
+if not defined SPACE_BEFORE set "SPACE_BEFORE=0"
+if not defined SESSION_TOTAL_BYTES set "SESSION_TOTAL_BYTES=0"
+
+if "!TRACK_MODE!"=="GLOBAL" (
+    :: GLOBAL CALCULATION
+    for /f "tokens=1,2 delims=#" %%A in ('powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Start-Sleep -Seconds 2; [long]$sb = $env:SPACE_BEFORE; [long]$st = $env:SESSION_TOTAL_BYTES; $saved = [long]([System.IO.DriveInfo]'%SystemDrive%\').AvailableFreeSpace - $sb; $newTotal = [math]::Max([long]0, $st + $saved); $formatted = if ($saved -le 0) { '0.00 KB' } elseif ($saved -ge 1GB) { '{0:N2} GB' -f ($saved/1GB) } elseif ($saved -ge 1MB) { '{0:N2} MB' -f ($saved/1MB) } else { '{0:N2} KB' -f ($saved/1KB) }; '{0}#{1}' -f $newTotal, $formatted"') do (
+        set "SESSION_TOTAL_BYTES=%%A"
+        set "SPACE_SAVED=%%B"
+    )
+) else (
+    :: PRECISION CALCULATION 
+    for /f "tokens=1,2 delims=#" %%A in ('powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$paths = $env:TRACK_TARGET.Split([char]124); [long]$after = 0; foreach($p in $paths){ if(Test-Path -LiteralPath $p){ $sum = (Get-ChildItem -LiteralPath $p -Recurse -File -Force -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum; if($sum) { $after += [long]$sum } } }; [long]$sb = $env:SPACE_BEFORE; [long]$st = $env:SESSION_TOTAL_BYTES; $saved = $sb - $after; $newTotal = [math]::Max([long]0, $st + $saved); $formatted = if ($saved -le 0) { '0.00 KB' } elseif ($saved -ge 1GB) { '{0:N2} GB' -f ($saved/1GB) } elseif ($saved -ge 1MB) { '{0:N2} MB' -f ($saved/1MB) } else { '{0:N2} KB' -f ($saved/1KB) }; '{0}#{1}' -f $newTotal, $formatted"') do (
+        set "SESSION_TOTAL_BYTES=%%A"
+        set "SPACE_SAVED=%%B"
+    )
+)
+echo  [ STATUS ] Reclaimed Disk Space: !SPACE_SAVED!
+call :LOG "INFO" "MAINTENANCE" "Operation reclaimed !SPACE_SAVED! of disk space."
+exit /b
+
 :: ---------------------------------------------------------------------------
 :: LOGGING ENGINE
 :: ---------------------------------------------------------------------------
@@ -1149,14 +1254,45 @@ echo [%DATE% !log_time!] [!log_cat!] [!log_lvl!] : !log_msg! >> "!LOG_FILE!"
 exit /b
 
 :FUNC_EXIT
+:: Calculate formatted totals and exact end time simultaneously via PowerShell
+if not defined SESSION_TOTAL_BYTES set "SESSION_TOTAL_BYTES=0"
+for /f "tokens=1,2 delims=#" %%A in ('powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "[long]$t = $env:SESSION_TOTAL_BYTES; $fmt = if ($t -le 0) { '0.00 KB' } elseif ($t -ge 1GB) { '{0:N2} GB' -f ($t/1GB) } elseif ($t -ge 1MB) { '{0:N2} MB' -f ($t/1MB) } else { '{0:N2} KB' -f ($t/1KB) }; $end = (Get-Date).ToString('HH:mm'); '{0}#{1}' -f $fmt, $end"') do (
+    set "SESSION_TOTAL_FORMATTED=%%A"
+    set "SESSION_END_TIME=%%B"
+)
+
 call :LOG "SYSTEM" "CORE" "Primus v!PRIMUS_VERSION! Session Terminated Safely."
+call :LOG "INFO" "CORE" "Session Duration: !CURRENT_TIME! to !SESSION_END_TIME!. Total Space Reclaimed: !SESSION_TOTAL_FORMATTED!"
+
+:: Append the visual summary footer directly to the log file
+(
+echo.
+echo ======================================================================
+echo                       P R I M U S   S U M M A R Y                     
+echo ======================================================================
+echo  Session Start:   !CURRENT_TIME!
+echo  Session End:     !SESSION_END_TIME!
+echo  Space Reclaimed: !SESSION_TOTAL_FORMATTED!
+echo ======================================================================
+echo.
+) >> "!LOG_FILE!"
+
 cls
 echo.
 echo.
 echo.
-echo            ----------------------------------------------------------------------
-echo                  Primus Session Terminated Safely. Closing Application...
-echo            ----------------------------------------------------------------------
-timeout /t 2 >nul
+echo            ======================================================================
+echo                               Primus Session Terminated Safely
+echo            ======================================================================
+echo.
+echo              Session Start:   !CURRENT_TIME!
+echo              Session End:     !SESSION_END_TIME!
+echo              Space Reclaimed: !SESSION_TOTAL_FORMATTED!
+echo              Log File:        !LOG_FILE!
+echo.
+echo            ======================================================================
+echo                                    Closing Application...
+echo            ======================================================================
+timeout /t 4 >nul
 endlocal
 exit
