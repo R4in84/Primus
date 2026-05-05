@@ -101,24 +101,6 @@ All notable changes to Primus will be documented in this file.
 - ✅ Standby memory flush outcome logged (success vs warning)
 - ✅ Phase-based Deep WinSxS status tracked per phase
 
-### 🐛 Bug Fixes
-
-- **Fixed** Silent failures in destructive operations
-  - Windows.old deletion now verifies completion
-  - Registry backups validate with error accumulation
-  - Event log clearing reports partial failures
-- **Fixed** Inaccurate success messages
-  - Standby memory flush only succeeds if operation actually succeeded
-  - DISM reboot-pending no longer treated as error
-  - Event logs report accurate cleared/locked count
-- **Fixed** Missing error feedback on partial operations
-  - Users now informed when some logs couldn't be cleared
-  - Users notified if Windows.old had locked files
-  - Registry backup reports which hive failed (if any)
-- **Fixed** Insufficient error handling in registry operations
-  - All 5 `reg save` commands tracked with cumulative errors
-  - Combined with file existence check for bulletproof validation
-
 ### 📈 Statistics & Metrics
 
 **New Operation Count**: +9 major features
