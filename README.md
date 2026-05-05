@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D4?logo=windows)](https://www.microsoft.com/windows)
-[![Version](https://img.shields.io/badge/Version-1.1-success)](https://github.com/R4in84/Primus/releases)
+[![Version](https://img.shields.io/badge/Version-1.1.0-success)](https://github.com/R4in84/Primus/releases)
 [![Batch Script](https://img.shields.io/badge/Language-Batch-4EAA25?logo=windowsterminal)](https://en.wikipedia.org/wiki/Batch_file)
 
 > Primus is a comprehensive command-line system maintenance utility for Windows 10/11 designed to consolidate common system maintenance, cleanup, repair, and optimization tasks into a single, easy-to-use interface with intelligent safety protocols, error verification, and comprehensive logging.
