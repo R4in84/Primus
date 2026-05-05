@@ -2,7 +2,7 @@
 
 All notable changes to Primus will be documented in this file.
 
-## [1.1] - 2026-05-05
+## [1.1.0] - 2026-05-05
 
 ### ✨ Major Features
 
