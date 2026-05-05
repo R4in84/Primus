@@ -116,6 +116,13 @@
 
 ---
 
+### ⚠️ Disclaimer
+
+**Primus is provided "AS-IS" without any warranty, either expressed or implied.** 
+While this utility includes numerous safety checks and requires administrative privileges to execute, it performs deep system modifications, including file deletion, network resets, and core image adjustments. 
+
+By choosing to run this script, you acknowledge that you are doing so at your own risk. The author (@R4in84) is not responsible for any unexpected data loss, system instability, or critical failures that may result from its use. **Always ensure you have backed up important data and created a System Restore Point (Option A) before running deep maintenance tasks.**
+
 ## 📥 Installation
 
 ### **Option 1: Direct Download** ⬇️
@@ -129,4 +136,4 @@
 git clone https://github.com/R4in84/Primus.git
 cd Primus
 # Run the script
-Primus.bat
+.\Primus.bat
