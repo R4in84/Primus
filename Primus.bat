@@ -1,7 +1,7 @@
 @echo off
 :: ===========================================================================
 :: P R I M U S  -  S Y S T E M   U T I L I T Y
-:: Version 1.1 (Build 20260505)
+:: Version 1.1.0 (Build 20260505)
 :: Repository: https://github.com/R4in84/Primus
 :: ===========================================================================
 :: Copyright (c) 2026 Chris Martin
@@ -35,7 +35,7 @@ setlocal EnableDelayedExpansion
 for /f %%A in ('"prompt $H &echo on &for %%B in (1) do rem"') do set "BS=%%A"
 
 :: Version Information
-set "PRIMUS_VERSION=1.1"
+set "PRIMUS_VERSION=1.1.0"
 set "PRIMUS_BUILD=20260505"
 
 :: Initialise Session Variables
@@ -155,7 +155,7 @@ echo.
 echo.
 echo.
 echo           ======================================================================
-echo                         Initialising Primus v!PRIMUS_VERSION! System Utility...
+echo                        Initialising Primus v!PRIMUS_VERSION! System Utility...
 echo           ======================================================================
 timeout /t 2 >nul
 
@@ -385,8 +385,8 @@ goto :SUB_MEMORY
 cls
 echo.
 echo           ======================================================================
-echo                                        P R I M U S
-echo                                           v!PRIMUS_VERSION!
+echo                                         P R I M U S 
+echo                                            v!PRIMUS_VERSION!
 echo           ======================================================================
 echo.
 echo               [ SYSTEM STATUS ]
