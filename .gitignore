@@ -1,7 +1,19 @@
-# Ignore Primus local testing logs
+# Ignore Primus local testing logs, temporary files, and flags
 *.log
 /Logs/
 /Temp/
+.eula_accepted
+
+# Ignore Primus local testing backups (Prevents leaking system data)
+/Backups/
+*.hiv
+*.bad
+
+# Ignore generated binaries and release archives
+*.exe
+*.zip
+*.7z
+*.rar
 
 # Ignore Windows system junk files
 Thumbs.db
@@ -10,8 +22,10 @@ ehthumbs.db
 ehthumbs_vista.db
 *.stackdump
 desktop.ini
+$RECYCLE.BIN/
 
-# Ignore IDE / Editor files (if you use VS Code or Sublime)
+# Ignore IDE / Editor files
 .vscode/
+.idea/
 *.sublime-workspace
 *.sublime-project
