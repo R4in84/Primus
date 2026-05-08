@@ -1,13 +1,18 @@
 # Ignore Primus local testing logs, temporary files, and flags
 *.log
-/Logs/
-/Temp/
+Logs/
+Temp/
 .eula_accepted
 
 # Ignore Primus local testing backups (Prevents leaking system data)
-/Backups/
+Backups/
 *.hiv
 *.bad
+*.wfw
+Primus_NetConfig_*.txt
+
+# Ignore downloaded utility payloads
+Tools/
 
 # Ignore generated binaries and release archives
 *.exe
