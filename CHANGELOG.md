@@ -2,6 +2,193 @@
 
 All notable changes to Primus will be documented in this file.
 
+## [1.2.0] - 2026-05-08
+
+### ✨ Major Features
+
+**Security Suite Category** 🛡️ **(NEW)**
+- ✅ Microsoft Safety Scanner (MSERT) integration
+  - Automated download from Microsoft CDN with architecture detection (x86/x64)
+  - 10-day expiration enforcement with automatic re-download
+  - Version validation and intelligent caching
+  - ~150MB payload with graceful offline handling
+- ✅ Windows Firewall reset to factory defaults
+  - Automatic rule backup to timestamped `.wfw` files
+  - Pre-reset confirmation with abort option if backup fails
+  - Backup location: `%ProgramData%\Primus\Backups\Firewall\`
+- ✅ Windows Defender Deep Clean
+  - Safe Mode automation for ELAM/Tamper Protection bypass
+  - Intelligent BCD management (automatic entry/exit)
+  - Service history and scan log purge
+  - Threat signature reset via `MpCmdRun.exe`
+  - Enhanced visual warnings with box-drawing characters
+  - Manual override instructions if user declines auto-reboot
+- ✅ Force Windows Defender signature update
+  - Direct `MpCmdRun.exe -SignatureUpdate` execution
+  - Real-time connection feedback
+
+**Privacy & Telemetry Category** 🔒 **(NEW)**
+- ✅ Windows System Telemetry (Enable/Disable)
+  - DiagTrack and dmwappushservice control
+  - Registry policy enforcement (`AllowTelemetry`)
+- ✅ Activity History & Timeline (Enable/Disable)
+  - Cloud sync control (`PublishUserActivities`, `UploadUserActivities`)
+  - User activity logging prevention
+- ✅ Error Reporting / WER (Enable/Disable)
+  - Crash report upload blocking
+- ✅ CEIP Scheduled Tasks (Enable/Disable)
+  - Customer Experience Improvement Program tasks
+  - Application Experience Appraiser tasks
+  - Consolidator, BthSQM, KernelCeipTask, UsbCeip control
+- ✅ Cortana & Web Search (Enable/Disable)
+  - Start menu web integration blocking
+  - Connected search prevention
+  - Windows Explorer restart for immediate effect
+- ✅ App Advertising ID (Enable/Disable)
+  - Cross-app tracking prevention (HKCU + HKLM)
+
+**Storage Optimisation Expansion**
+- ✅ CompactOS system compression (Enable/Disable)
+  - `compact.exe /compactos:always` integration
+  - Status query before user selection
+  - Typical savings: 2-4GB
+- ✅ Hibernation space management
+  - Three modes: Disable / Reduced / Full
+  - Reduced mode: ~50% hiberfil.sys size reduction
+  - Full control via `powercfg /h` commands
+- ✅ Windows Reserved Storage control (Enable/Disable)
+  - DISM-based state management
+  - Build 18362+ validation (Windows 10 1903+)
+  - Typical savings: ~7GB
+  - Graceful unsupported build handling
+- ✅ Shadow Copy storage capping
+  - Four preset limits: 5GB / 10GB / 15GB / 20GB
+  - `vssadmin resize shadowstorage` integration
+  - Automatic fallback to `vssadmin add` if unconfigured
+
+### 🔧 Quality & Reliability Improvements
+
+**Build Version Validation**
+- 🔧 Reserved Storage feature gated behind Build 18362+ check
+  - Prevents execution on Windows 10 1809 and earlier
+  - Clear messaging with detected build number
+  - Automatic return to menu on unsupported systems
+
+**Enhanced Backup Systems**
+- 🔧 Firewall rule export with validation
+  - Pre-reset `.wfw` backup with error checking
+  - User confirmation required if backup fails
+  - Timestamped backups: `Firewall_YYYYMMDD_HHMMSS.wfw`
+- 🔧 Network configuration snapshots
+  - `ipconfig /all` exports before TCP/IP and Winsock resets
+  - Stored in `%ProgramData%\Primus\Backups\NetConfig\`
+
+**Safe Mode Automation**
+- 🔧 Intelligent BCD management for Defender cleanup
+  - Automatic `bcdedit /set {current} safeboot minimal` on Normal Boot
+  - Automatic `bcdedit /deletevalue {current} safeboot` after Safe Mode cleanup
+  - Clear visual warnings if user declines auto-exit from Safe Mode
+  - Manual recovery instructions via `msconfig` displayed
+  - Prevents infinite Safe Mode boot loops
+
+**Space Tracking Integration**
+- 🔧 All new storage functions now integrated with session tracking
+  - CompactOS enable/disable operations
+  - Hibernation mode changes
+  - Reserved Storage state toggles
+  - Shadow Copy storage resizing
+  - Session summary accurately reflects total space impact
+
+**Visual Enhancements**
+- 🔧 Box-drawing character warnings for critical operations
+  - Safe Mode override instructions
+  - Enhanced readability and visibility
+- 🔧 CompactOS status display before menu
+  - `compact.exe /compactos:query` execution
+  - Shows current compression state to user
+
+**Service Management Improvements**
+- 🔧 Privacy toggles properly handle service states
+  - DiagTrack and dmwappushservice stopped before disable
+  - Services restarted when re-enabling telemetry
+  - Scheduled task manipulation via `schtasks /Change`
+
+**Error Handling Refinements**
+- 🔧 MSERT download failure handling
+  - Clear error messaging on network failures
+  - Graceful return to menu without crash
+- 🔧 Firewall reset abort on backup failure
+  - Prevents destructive reset without safety net
+- 🔧 Reserved Storage DISM error detection
+  - Warns if feature unsupported on exact build variant
+
+### 🛡️ New Safety Protocols
+
+| Feature | Description |
+|---------|-------------|
+| **Build Version Validation** | Prevents execution of unsupported features on older builds (Reserved Storage requires 18362+) |
+| **Automated Backups** | Firewall rules and network configs backed up before destructive resets |
+| **Safe Mode Automation** | Intelligent BCD management with clear manual override instructions to prevent boot loops |
+| **MSERT Expiration Enforcement** | 10-day signature validity check with automatic re-download from Microsoft CDN |
+| **Privacy Change Logging** | All telemetry and privacy toggles logged with category "PRIVACY" |
+| **Service State Preservation** | Telemetry services only restarted if they were successfully stopped |
+| **Visual Warning Escalation** | Box-drawing character warnings for operations requiring manual intervention |
+
+### 📊 Expanded Logging
+
+- ✅ New log categories: `SECURITY`, `PRIVACY`, `TELEMETRY`
+- ✅ MSERT download status and version validation logged
+- ✅ Firewall backup success/failure logged before reset
+- ✅ Safe Mode entry/exit transitions logged with timestamps
+- ✅ Privacy toggle state changes logged (Enable/Disable)
+- ✅ Reserved Storage build validation logged on unsupported systems
+- ✅ CompactOS compression state changes logged
+- ✅ Hibernation mode transitions logged
+
+### 📈 Statistics & Metrics
+
+**New Operation Count**: +14 major features
+- 4 Security Suite utilities
+- 6 Privacy & Telemetry dual-state toggles (12 functions)
+- 4 Storage Optimisation Utilities
+
+**New Categories**: +2
+- **Security Suite** (4 operations)
+- **Privacy & Telemetry** (6 operations)
+
+**Total Categories**: 7 (up from 5)
+- System Recovery
+- System Maintenance
+- System Diagnostics & Repair
+- Network Optimisation
+- System Optimisation
+- **Security Suite** (NEW)
+- **Privacy & Telemetry** (NEW)
+
+**Total Operations**: 56+ utilities across all categories (up from 42)
+
+**Lines of Code**: ~2,400 (up from ~1,800)
+
+**Supported Privacy Controls**: 6 independent toggles affecting 15+ system components
+
+### 🐛 Bug Fixes
+
+- 🐛 Fixed `echo Y |` spacing in Windows.old deletion (now `echo Y|`)
+  - Prevents potential "Y " string injection causing takeown failures
+- 🐛 Corrected SFC log parsing to use `-Tail` instead of `Select-Object -Last`
+  - Improves performance on systems with large CBS.log files (10,000+ lines)
+  - Prevents PowerShell timeout on older hardware
+
+### 📚 Documentation
+
+- 📚 Updated README with Security Suite and Privacy & Telemetry categories
+- 📚 Added usage examples for privacy hardening and MSERT scanning
+- 📚 Expanded file structure documentation to include Firewall and Tools directories
+- 📚 Updated system requirements to note Windows Defender dependency
+- 📚 Added disclaimer clarifications for security and privacy modifications
+
+---
+
 ## [1.1.0] - 2026-05-05
 
 ### ✨ Major Features
@@ -14,7 +201,7 @@ All notable changes to Primus will be documented in this file.
 - ✅ Intelligent DISM 3010 handling (reboot-pending state)
 - ✅ Phase-based Deep WinSxS reset with safety locks
 
-**System Optimization Category**
+**System Optimisation Category**
 - ✅ SSD TRIM command execution (all connected drives)
 - ✅ HDD defragmentation with SSD auto-detection
 - ✅ Top memory consumer analysis (top 10 processes)
@@ -31,7 +218,7 @@ All notable changes to Primus will be documented in this file.
 **System Maintenance Expansions**
 - ✅ Windows Font Cache rebuild (fixes garbled/corrupted text)
 - ✅ DirectX shader cache cleanup (fixes graphical glitches)
-- ✅ Delivery Optimization peer cache purge (reclaims GBs)
+- ✅ Delivery Optimisation peer cache purge (reclaims GBs)
 - ✅ Windows.old installation purge with post-deletion verification
 - ✅ Event log clearing with success/failure tracking (reports locked logs)
 
@@ -104,8 +291,8 @@ All notable changes to Primus will be documented in this file.
 ### 📈 Statistics & Metrics
 
 **New Operation Count**: +9 major features
-- 4 CHKDSK utilities
-- 6 System Optimization utilities
+- 4 CHKDSK Utilities
+- 6 System Optimisation Utilities
 - Plus Registry/Driver backups and expanded maintenance
 
 **Expanded Browser Support**: Unchanged (14 browsers)
@@ -115,9 +302,9 @@ All notable changes to Primus will be documented in this file.
 **Total Categories**: 5 (up from 4)
 - System Recovery
 - System Maintenance
-- Network Optimization
+- Network Optimisation
 - **System Diagnostics & Repair** (NEW)
-- **System Optimization** (NEW)
+- **System Optimisation** (NEW)
 
 **Total Operations**: 42 utilities across all categories
 
@@ -180,7 +367,7 @@ A command-line system maintenance utility for Windows 10/11 with intelligent saf
 
 #### **🧹 System Maintenance**
 - ✅ Deep cleanup of temporary files (User + System)
-- ✅ Prefetch cache optimization
+- ✅ Prefetch cache optimisation
 - ✅ Windows Update download cache reset
 - ✅ Thumbnail database regeneration
 - ✅ Recycle Bin purge (all drives)
@@ -192,7 +379,7 @@ A command-line system maintenance utility for Windows 10/11 with intelligent saf
 - ✅ Crash dump and error report cleanup
 - ✅ Event log clearing
 
-#### **🌐 Network Optimization**
+#### **🌐 Network Optimisation**
 - ✅ DNS cache display/flush
 - ✅ ARP cache display/clear
 - ✅ IP address release/renew
