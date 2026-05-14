@@ -2,6 +2,41 @@
 
 All notable changes to Primus will be documented in this file.
 
+## [1.2.1] - 2026-05-14
+
+### ✨ Major Features
+
+**Advanced Memory Analysis**
+- ✅ Upgraded top memory consumer module with intelligent application grouping
+- ✅ Consolidates multi-process applications (e.g., Firefox, Discord) into single combined entries
+- ✅ Added "Instances" tracking to display child process counts per application
+- ✅ Implemented dynamic PowerShell string formatting for pixel-perfect, right-aligned data columns
+- ✅ Auto-truncates long process names to preserve UI boundaries
+
+**Dynamic Multi-Browser Deep Clean**
+- ✅ Re-architected browser cleaning engine to use dynamic `for` loops
+- ✅ Auto-detects active profiles and directories before execution (eliminates ghost commands)
+- ✅ Seamlessly supports 14 browsers across Chromium, Firefox, and Opera architectures
+
+### 🔧 Quality & Reliability Improvements
+
+**Menu & Workflow Reorganization**
+- 🔧 Rebalanced maintenance categories into logical groupings:
+  - **General Cleanup**: 6 safe, routine options (added Error Reports & Dumps here)
+  - **Deep System Cleanup**: 10 advanced, interactive options (moved Disk Cleanup here)
+- 🔧 Physically re-ordered all script subroutines to chronologically match the UI flow for easier codebase maintenance
+
+**Pixel-Perfect UI Engine**
+- 🔧 Implemented "Ghost Caret" (`^&`) awareness to ensure all category headers render at exactly 80 characters
+- 🔧 Recalibrated main menu and sub-menu margins (`%M0%` / `%M1%`) for absolute vertical symmetry
+- 🔧 Standardized the horizontal separator (`%BAR%`) alignment across all module footers
+
+**Codebase Optimization & OS Detection**
+- 🔧 Condensed complex PowerShell modules (like Memory Analysis) into ultra-lean, single-line execution strings utilizing command aliases
+- 🔧 Added dynamic `Dev Build` detection tag for Windows Insider releases (Build 26300+)
+
+---
+
 ## [1.2.0] - 2026-05-08
 
 ### ✨ Major Features
