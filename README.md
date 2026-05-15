@@ -3,11 +3,10 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D4?logo=windows)](https://www.microsoft.com/windows)
 [![Version](https://img.shields.io/badge/Version-1.2.1-success)](https://github.com/R4in84/Primus/releases)
-[![Batch Script](https://img.shields.io/badge/Language-Batch-4EAA25?logo=windowsterminal)](https://en.wikipedia.org/wiki/Batch_file)
 
-> Primus is a comprehensive command-line system maintenance utility for Windows 10/11 designed to consolidate common system maintenance, cleanup, repair, optimisation, security, and privacy tasks into a single, easy-to-use interface with intelligent safety protocols, error verification, and comprehensive logging.
+> Primus is a collection of scripts I use to maintain, clean, and optimize Windows 10/11. It consolidates various system tasks into a single interface with built-in safety checks and logging.
 
-> It utilizes native Windows tools (such as SFC, DISM, CHKDSK, PowerShell WMI, and Windows Defender) to help maintain system health, diagnose file system issues, resolve common operating system or network problems, and provide granular control over telemetry and privacy settings.
+> It uses native Windows tools (SFC, DISM, CHKDSK, and PowerShell) to help with system health, file system issues, and privacy settings.
 
 ![Primus Main Menu](Media/Main.png)
 
@@ -16,133 +15,76 @@
 ## ⚡ Features
 
 ### **System Recovery** 🔄
-- ✅ Create manual System Restore Points with VSS
-- ✅ Intelligent Shadow Copy cleanup (preserves most recent)
-- ✅ Bare-metal Registry hive backup (SYSTEM, SOFTWARE, SAM, SECURITY, DEFAULT)
-- ✅ Emergency Registry restore script generation
-- ✅ 3rd-party driver backup via DISM export
-- ✅ Automatic disk space validation before operations
+- Create manual System Restore Points
+- Basic Shadow Copy cleanup (keeps the most recent)
+- Registry hive backups (SYSTEM, SOFTWARE, SAM, etc.)
+- Emergency Registry restore script generation
+- Driver backups via DISM export
+- Checks for disk space before running tasks
 
 ### **System Maintenance** 🧹
-- ✅ **[UPDATED]** Logical Sub-Menus separating "General Cleanup" from "Deep System Cleanup" tasks
-- ✅ Deep cleanup of temporary files (User + System)
-- ✅ Prefetch cache optimisation
-- ✅ Windows Update download cache reset
-- ✅ Crash dump and Windows Error Reporting cleanup
-- ✅ Thumbnail database regeneration
-- ✅ Recycle Bin purge (all drives)
-- ✅ Native Disk Cleanup integration
-- ✅ Icon and thumbnail cache rebuild (fixes broken icons)
-- ✅ Windows Font Cache rebuild (fixes garbled text)
-- ✅ **[UPDATED] Dynamic Multi-Browser Deep Clean** (Auto-detects installed browsers to prevent ghost commands)
-  - Chromium: Chrome, Edge, Brave, Vivaldi, Opera, Opera GX, Arc, Thorium, Helium
-  - Firefox: Mozilla Firefox, LibreWolf, Waterfox, Floorp, Zen
-- ✅ DirectX shader cache cleanup
-- ✅ Delivery Optimisation peer cache cleanup
-- ✅ Windows Store cache reset (with LTSC/Server detection)
-- ✅ WinSxS Component Store cleanup (Standard + Deep modes with error handling)
-- ✅ Event log clearing with success/failure tracking
-- ✅ Windows.old installation purge (with verification)
+- Organized sub-menus for General and Deep cleanup tasks
+- Clean up temporary files (User + System)
+- Reset Windows Update download cache
+- Clear crash dumps and error reports
+- Rebuild icon and font caches (fixes visual glitches)
+- Browser cleanup (supports Chromium, Firefox, and Opera variants)
+- Reset Windows Store cache
+- WinSxS Component Store cleanup (Standard + Deep modes)
+- Clear system event logs
 
 ### **System Diagnostics & Repair** 🔧
-- ✅ CHKDSK volume dirty bit query
-- ✅ CHKDSK read-only integrity scan
-- ✅ CHKDSK offline repair scheduling
-- ✅ Scheduled repair cancellation
-- ✅ System File Checker (SFC) with intelligent log parsing
-- ✅ DISM Image Health Check (Quick)
-- ✅ DISM Deep Image Scan
-- ✅ DISM restoration with 3010 reboot-pending handling
-- ✅ Phase-based Deep WinSxS reset with safety locks
+- Query volume dirty bits
+- Read-only integrity scans
+- Schedule and cancel offline repairs
+- System File Checker (SFC) with basic log parsing
+- DISM health checks and image scans
+- DISM image repair with reboot-pending detection
 
-### **Network Optimisation** 🌐
-- ✅ DNS cache display and flush
-- ✅ ARP cache display and clear
-- ✅ IP address release and renew
-- ✅ TCP/IP stack reset with configuration backup
-- ✅ Winsock catalog reset with configuration backup
+### **Network Tools** 🌐
+- Display and flush DNS/ARP caches
+- Release and renew IP addresses
+- Reset TCP/IP stack and Winsock (includes config backups)
 
-### **System Optimisation** ⚙️
-- ✅ SSD TRIM command (all connected drives)
-- ✅ HDD defragmentation (with SSD detection)
-- ✅ CompactOS system compression (Enable/Disable with status display)
-- ✅ Hibernation space management (Disable / Reduced / Full modes)
-- ✅ Windows Reserved Storage control (requires Build 18362+)
-- ✅ Shadow Copy storage capping (5GB / 10GB / 15GB / 20GB presets)
-- ✅ **[UPDATED] Advanced Memory Analysis** (Groups processes by application, sums physical RAM, and tracks instance counts)
-- ✅ System clipboard clear
-- ✅ Standby RAM cache flush (with native API execution)
-- ✅ Active working set flush (forces memory release)
+### **System Optimization** ⚙️
+- SSD TRIM and HDD defragmentation
+- CompactOS system compression (Enable/Disable)
+- Manage Hibernation file size (Disable / Reduced / Full)
+- Toggle Windows Reserved Storage (Build 18362+)
+- Shadow Copy storage limits (5GB to 20GB)
+- Basic memory usage analysis (grouped by application)
+- Clear clipboard and flush standby RAM cache
 
-### **Security Suite** 🛡️
-- ✅ Microsoft Safety Scanner (MSERT) integration
-  - Automated download with 10-day expiration enforcement
-  - Architecture-aware (x86/x64 auto-detection)
-  - Version validation and management
-- ✅ Windows Firewall reset to factory defaults
-  - Automatic rule backup before reset
-  - Timestamped `.wfw` export for restoration
-- ✅ Windows Defender Deep Clean
-  - Safe Mode automation for ELAM/Tamper Protection bypass
-  - Service history and scan log purge
-  - Threat signature reset
-  - Automatic Safe Mode entry/exit with visual warnings
-- ✅ Force Defender signature update
-
-### **Privacy & Telemetry** 🔒
-- ✅ Windows System Telemetry (Enable/Disable)
-  - DiagTrack service control
-  - Registry policy enforcement
-- ✅ Activity History & Timeline (Enable/Disable)
-  - Cloud sync control
-  - User activity logging
-- ✅ Error Reporting (WER) (Enable/Disable)
-  - Crash report uploads
-- ✅ CEIP Scheduled Tasks (Enable/Disable)
-  - Customer Experience Improvement Program
-  - Application Experience tasks
-- ✅ **[UPDATED]** Cortana & Web Search (Enable/Disable)
-  - Robust suppression of Bing Search and Taskbar suggestions
-- ✅ App Advertising ID (Enable/Disable)
-  - Cross-app tracking prevention
+### **Security & Privacy** 🛡️
+- Microsoft Safety Scanner (MSERT) integration
+- Reset Windows Firewall to default settings (includes rule backup)
+- Windows Defender history and scan log cleanup (requires Safe Mode)
+- Force Defender signature updates
+- Toggle System Telemetry and Activity History
+- Disable Cortana web search and App Advertising ID
+- Manage CEIP and Error Reporting tasks
 
 ### **User Experience** ✨
-- ✅ **[NEW]** Dynamic OS detection for Windows Insider / Dev Builds (e.g., 25H2)
-- ✅ **[NEW]** Pixel-perfect UI alignment engine utilizing dynamic variable expansion
-- ✅ Automatic update checker (GitHub API integration, 3s timeout)
-- ✅ Real-time space reclamation display after each operation
-- ✅ Session cumulative space tracking across all operations
-- ✅ Session summary on exit (start time, end time, total space freed)
-- ✅ Enhanced logging with operation-level detail
-- ✅ Intuitive menu-driven interface with visual hierarchy
-- ✅ Clear operation status indicators (PROCESS, STATUS, WARNING, ERROR)
-- ✅ Enhanced visual warnings with box-drawing characters
+- Detection for Windows Insider / Dev Builds
+- Consistent UI alignment using variable expansion
+- Basic update checker via GitHub API
+- Displays reclaimed space after cleanup tasks
+- Session summary showing total space freed and duration
+- Straightforward logging for all operations
 
 ---
 
-## 🛡️ Safety Features
+## 🛡️ Safety Checks
 
 | Feature | Description |
 |---------|-------------|
-| **Admin Enforcement** | Automatic UAC elevation if not running as admin |
-| **First-Run EULA** | Mandatory acknowledgment of risks on initial launch |
-| **Disk Space Validation** | Prevents operations when <2GB free (prevents corruption) |
-| **Cumulative Error Tracking** | Registry hive backups validated against all `reg save` exit codes |
-| **Locked File Protection** | Automatically skips in-use files (no forced deletions) |
-| **Post-Operation Verification** | Windows.old deletion, Registry backups, and Driver exports all verified |
-| **Parser-Safe Execution** | Robust escape character (`^&`) handling prevents batch parsing crashes |
-| **Error-Level Reporting** | Detailed feedback on partial failures (e.g., locked event logs) |
-| **Session Logging** | Every action logged with timestamp, category, and severity |
-| **Safe Mode Detection** | Displays boot status in header for awareness |
-| **Edition-Specific Guards** | Warns when attempting unsupported operations (LTSC, Server) |
-| **Service Detection** | Validates service existence before stop/start (DoSvc) |
-| **Reboot State Handling** | Gracefully handles DISM 3010 (reboot pending) status codes |
-| **Non-blocking Update Checks** | GitHub API queries timeout after 3 seconds |
-| **Controlled Timeouts** | 120-second safeguard on hung processes (wsreset.exe) |
-| **Build Version Validation** | Prevents execution of unsupported features on older builds |
-| **Automated Backups** | Firewall rules and network configs backed up before destructive resets |
-| **Safe Mode Automation** | Intelligent BCD management with clear manual override instructions |
-| **MSERT Expiration Enforcement** | 10-day signature validity check with auto-download |
+| **Admin Check** | Automatically requests elevation if not running as admin |
+| **First-Run EULA** | Requires acknowledgment of risks on first launch |
+| **Space Validation** | Skips heavy operations if <2GB free to prevent errors |
+| **Backup Scripts** | Automatically backs up Registry, Firewall, and Network configs |
+| **Locked Files** | Bypasses in-use files without forced deletion |
+| **Safe Mode Support** | Identifies boot status and handles Safe Mode transitions for Defender tasks |
+| **Build Awareness** | Checks build versions to prevent running unsupported features |
 
 ---
 
@@ -151,36 +93,22 @@
 | Requirement | Specification |
 |-------------|---------------|
 | **Operating System** | Windows 10 (Build 19041+) or Windows 11 |
-| **Edition** | Pro, Enterprise, or Education (Home limited support) |
-| **Privileges** | Administrator rights **required** |
-| **PowerShell** | Version 5.1 or higher (pre-installed) |
-| **Disk Space** | Minimum 2GB free for repair operations |
-| **Architecture** | x64 or ARM64 (tested on x64) |
-| **Internet** | Optional (update checking, MSERT download, non-blocking) |
-| **NTFS Drive** | Required for System Restore and CHKDSK operations |
-| **Windows Defender** | Required for Security Suite features (MSERT, signature updates) |
+| **Edition** | Pro, Enterprise, or Education (Home has limited support) |
+| **Privileges** | Administrator rights required |
+| **Disk Space** | Minimum 2GB free for repair tasks |
 
 ---
 
 ### ⚠️ Disclaimer
 
-**Primus is provided "AS-IS" without any warranty, either expressed or implied.** While this utility includes numerous safety checks and requires administrative privileges to execute, it performs deep system modifications, including file deletion, network resets, core image adjustments, security policy changes, and privacy setting modifications.
+**Primus is provided "AS-IS" without any warranty.** While I've included safety checks, this utility performs modifications to system files, network settings, and security policies. 
 
-By choosing to run this script, you acknowledge that you are doing so at your own risk. The author (@R4in84) is not responsible for any unexpected data loss, system instability, privacy implications, or critical failures that may result from its use. **Always ensure you have backed up important data and created a System Restore Point (Option A) before running deep maintenance tasks.**
+By using this script, you acknowledge you are doing so at your own risk. I am not responsible for any data loss or system instability. **Always create a Restore Point (Option A) before running deep maintenance tasks.**
 
 ---
 
 ## 📥 Installation
 
-### **Option 1: Direct Download** ⬇️
-1. Visit the [Releases](https://github.com/R4in84/Primus/releases) page
-2. Download `Primus.bat` from the latest release
-3. Save to a permanent location (e.g., `C:\Tools\Primus\`)
-4. Right-click → **Run as administrator**
-
-### **Option 2: Git Clone** 🔄
-```bash
-git clone [https://github.com/R4in84/Primus.git](https://github.com/R4in84/Primus.git)
-cd Primus
-# Run the script
-.\Primus.bat
+1. Download `Primus.bat` from the [Releases](https://github.com/R4in84/Primus/releases) page.
+2. Save it to a folder of your choice.
+3. Right-click and **Run as administrator**.
