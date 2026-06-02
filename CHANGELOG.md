@@ -2,6 +2,38 @@
 
 All notable changes to Primus will be documented in this file.
 
+## [1.3.0] - 2026-06-02
+
+### ✨ New Features
+
+**General Cleanup Expansion & Automation**
+- ✅ Added four new targeted cleanup modules: Invalid User Shortcuts, Explorer Run History, Installer Leftovers, and Orphaned ProgramData (Spotify, NVIDIA, Discord caches).
+- ✅ Introduced an Automated Execution mode (`[X] EXECUTE ALL OPERATIONS`) to sequentially run the entire 10-step general maintenance suite with a single confirmation.
+
+**Native ARM64 Support**
+- ✅ Added dynamic payload detection for Windows on ARM (ARM64) architecture in the Microsoft Safety Scanner (MSERT) module.
+
+**Enterprise-Grade Logging & Fallbacks**
+- ✅ Implemented a global `SESSION_DATE` variable for perfectly consistent, locale-independent ISO-8601 logging (`YYYY-MM-DD`) across all headers and files.
+- ✅ Added native batch variable fallbacks for the session exit summary dashboard to handle restricted or failing PowerShell environments gracefully.
+
+### 🐛 Bug Fixes
+
+**Edge Cases & Logic Traps**
+- 🐛 **Ghost Terminals:** Replaced top-level `exit /b` with a hard `exit` in the privilege escalation block to cleanly kill non-elevated parent terminals and prevent ghost windows.
+- 🐛 **CHKDSK False Positives:** Added strict `errorlevel` trapping to verify that offline file system repairs actually scheduled successfully before prompting the user to reboot.
+- 🐛 **WMI Storage Blocks:** Implemented a `$null` safeguard in the `CHECK_FREE_SPACE` engine to prevent false "low space" locks on systems with corrupted WMI repositories.
+- 🐛 **EULA File Optimization:** Replaced `echo.` with `type nul >` to write a pristine, 0-byte `.eula_accepted` state marker.
+
+### 🛡️ Safety & Refinements
+
+**Transactional Rollbacks & UX**
+- 🛡️ **Safe Mode Hijack Prevention:** Added a transactional rollback to the Defender Deep Clean module. If the OS blocks the restart command, the BCD `safeboot` flag is safely reverted to prevent unexpected Safe Mode loops.
+- 🔧 **Execution Speed:** Removed redundant `timeout` delays from synchronous service starts (e.g., System Restore VSS initialization).
+- 🔧 **Exit Readability:** Extended the final application termination delay to 5 seconds to allow ample time to review the reclaimed space summary.
+
+---
+
 ## [1.2.1] - 2026-05-14
 
 ### ✨ New Features
