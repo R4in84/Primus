@@ -1,7 +1,7 @@
 @echo off
 :: ===========================================================================
 :: P R I M U S  -  S Y S T E M   U T I L I T Y
-:: Version 1.2.0 (Build 20260514)
+:: Version 1.3.0 (Build 20260602)
 :: Repository: https://github.com/R4in84/Primus
 :: ===========================================================================
 :: Copyright (c) 2026 Chris Martin
@@ -24,7 +24,7 @@
 :: Auto Admin Check / Evaluation
 :CHECK_PRIVILEGES
 fltmc >nul 2>&1
-if errorlevel 1 (echo [SYSTEM] Requesting elevated privileges... & powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Start-Process -FilePath \"%~f0\" -Verb RunAs" & exit /b)
+if errorlevel 1 (echo [SYSTEM] Requesting elevated privileges... & powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Start-Process -FilePath \"%~f0\" -Verb RunAs" & exit)
 
 :START_SCRIPT
 setlocal EnableDelayedExpansion
@@ -33,8 +33,8 @@ setlocal EnableDelayedExpansion
 for /f %%A in ('"prompt $H &echo on &for %%B in (1) do rem"') do set "BS=%%A"
 
 :: Version Information
-set "PRIMUS_VERSION=1.2.1"
-set "PRIMUS_BUILD=20260514"
+set "PRIMUS_VERSION=1.3.0"
+set "PRIMUS_BUILD=20260602"
 
 :: Initialise Session Variables
 set "SESSION_TOTAL_BYTES=0"
@@ -62,8 +62,10 @@ if not defined OS_NAME set "OS_NAME=Windows"
 if not defined OS_BUILD set "OS_BUILD=Unknown"
 if "!OS_BUILD!"=="Unknown" goto :SKIP_OS_MATH
 echo(!OS_BUILD!| findstr /r "^[0-9][0-9]*$" >nul
-if !errorlevel! equ 0 if !OS_BUILD! GEQ 22000 set "OS_NAME=!OS_NAME:Windows 10=Windows 11!"
-if !errorlevel! equ 0 if !OS_BUILD! GEQ 26300 set "DEV_TAG= Dev Build"
+if !errorlevel! equ 0 (
+    if !OS_BUILD! GEQ 22000 set "OS_NAME=!OS_NAME:Windows 10=Windows 11!"
+    if !OS_BUILD! GEQ 26300 set "DEV_TAG= Dev Build"
+)
 :SKIP_OS_MATH
 
 :: Gracefully format the OS string depending on if DisplayVersion exists (e.g., LTSC/Server fallback)
@@ -77,6 +79,9 @@ set "SYS_FREE=N/A"
 set "CURRENT_TIME=00:00"
 set "FILE_TIME=00000000_000000"
 for /f "tokens=1-4 delims=#" %%A in ('powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$u=(New-TimeSpan -Start (Get-CimInstance Win32_OperatingSystem).LastBootUpTime); $d=[math]::Round((Get-CimInstance Win32_LogicalDisk -Filter 'DeviceID=''%SystemDrive%''').FreeSpace/1GB,1); $t=(Get-Date).ToString('HH:mm'); $f=(Get-Date).ToString('yyyyMMdd_HHmmss'); ('{0}d {1}h {2}m#{3} GB#{4}#{5}' -f $u.Days, $u.Hours, $u.Minutes, $d, $t, $f)"') do set "SYS_UPTIME=%%A" & set "SYS_FREE=%%B" & set "CURRENT_TIME=%%C" & set "FILE_TIME=%%D"
+
+:: Generate global ISO date from FILE_TIME for logs and UI consistency
+set "SESSION_DATE=!FILE_TIME:~0,4!-!FILE_TIME:~4,2!-!FILE_TIME:~6,2!"
 
 :: Determine Boot State (Normal vs Safe Mode)
 set "BOOT_STATUS=Normal Boot"
@@ -112,7 +117,7 @@ echo ===========================================================================
 echo  USER: !USERNAME!
 echo  HOST: %COMPUTERNAME%
 echo  OS:   !FULL_OS!
-echo  SESSION: !CURRENT_TIME! %DATE%
+echo  SESSION: !CURRENT_TIME! !SESSION_DATE!
 echo ================================================================================
 echo.
 ) >> "!LOG_FILE!"
@@ -147,9 +152,9 @@ echo           =================================================================
 :EULA_PROMPT
 set "eula_ans="
 set /p "eula_ans=%BS%             [ ACTION ] Type ACCEPT to continue or EXIT to cancel :> "
-if /i "!eula_ans!"=="EXIT" exit /b
+if /i "!eula_ans!"=="EXIT" exit
 if /i "!eula_ans!"=="ACCEPT" (
-    echo. > "!EULA_FILE!"
+    type nul > "!EULA_FILE!"
     call :LOG "SYSTEM" "CORE" "User accepted first-run End User Licence Agreement."
     goto :SKIP_EULA
 )
@@ -195,7 +200,7 @@ echo %M0%-- SECURITY ^& PRIVACY ------------------------------------------------
 echo %M1%[9] Security Suite                         [10] Privacy ^& Telemetry
 echo.
 echo %M0%%BAR:~0,80%
-echo %M0% [S] SYSTEM INFORMATION          [H] HELP ^& INFO           [X] EXIT APPLICATION
+echo %M0% [S] SYSTEM INFORMATION          [H] HELP ^& INFO           [Q] QUIT APPLICATION
 echo.
 set "main_choice="
 set /p "main_choice=%BS%%M0%[Selection] :> "
@@ -216,7 +221,7 @@ if "!main_choice!"=="9" goto :SUB_SECURITY
 if "!main_choice!"=="10" goto :SUB_TELEMETRY
 if /i "!main_choice!"=="S" goto :FUNC_SYSINFO
 if /i "!main_choice!"=="H" goto :FUNC_HELP
-if /i "!main_choice!"=="X" goto :FUNC_EXIT
+if /i "!main_choice!"=="Q" goto :FUNC_EXIT
 goto :MENU
 
 :: ---------------------------------------------------------------------------
@@ -224,18 +229,27 @@ goto :MENU
 :: ---------------------------------------------------------------------------
 :SUB_MAINT_GEN
 call :PRINT_SUB_HEADER "GENERAL CLEANUP"
-echo %M1%[1] Clean All Temp Files                   [2] Clear Prefetch Cache
-echo %M1%[3] Clean Update Download Cache            [4] Clean Error Reports ^& Dumps
-echo %M1%[5] Clean Thumbnail Cache                  [6] Empty Recycle Bins
+echo %M1%[1] Clean All Temp Files           [2] Clear Prefetch Cache
+echo %M1%[3] Clean Update Download Cache    [4] Clean Error Reports ^& Dumps
+echo %M1%[5] Clean Thumbnail Cache          [6] Invalid User Shortcuts
+echo %M1%[7] Clear Explorer Run History     [8] Clean Installer Leftovers
+echo %M1%[9] Orphaned ProgramData          [10] Empty Recycle Bins
+echo.
+echo %M1%[X] EXECUTE ALL OPERATIONS (1-10)
 call :MENU_FOOTER "R" "RETURN TO MAIN MENU"
 set "choice="
 set /p "choice=%BS%%M0%[Selection] :> "
-if "!choice!"=="1" goto :FUNC_TEMP_CLEAN
-if "!choice!"=="2" goto :FUNC_PREFETCH
-if "!choice!"=="3" goto :FUNC_UPDATE
-if "!choice!"=="4" goto :FUNC_CRASHDUMPS
-if "!choice!"=="5" goto :FUNC_THUMBNAILS
-if "!choice!"=="6" goto :FUNC_RECYCLE
+if "!choice!"=="1" set "AUTO_CLEAN=0" & goto :FUNC_TEMP_CLEAN
+if "!choice!"=="2" set "AUTO_CLEAN=0" & goto :FUNC_PREFETCH
+if "!choice!"=="3" set "AUTO_CLEAN=0" & goto :FUNC_UPDATE
+if "!choice!"=="4" set "AUTO_CLEAN=0" & goto :FUNC_CRASHDUMPS
+if "!choice!"=="5" set "AUTO_CLEAN=0" & goto :FUNC_THUMBNAILS
+if "!choice!"=="6" set "AUTO_CLEAN=0" & goto :FUNC_INVALID_SHORTCUTS
+if "!choice!"=="7" set "AUTO_CLEAN=0" & goto :FUNC_EXPLORER_RUN
+if "!choice!"=="8" set "AUTO_CLEAN=0" & goto :FUNC_INSTALLER_LEFTOVERS
+if "!choice!"=="9" set "AUTO_CLEAN=0" & goto :FUNC_ORPHANED_PROGRAMDATA
+if "!choice!"=="10" set "AUTO_CLEAN=0" & goto :FUNC_RECYCLE
+if /i "!choice!"=="X" goto :FUNC_AUTO_GEN
 if /i "!choice!"=="R" goto :MENU
 goto :SUB_MAINT_GEN
 
@@ -398,7 +412,7 @@ echo              OS:   !FULL_OS!
 echo              --------------------------------------------------------------------------
 echo              !USER_STR:~0,35!      STATUS: !BOOT_STATUS!
 echo              !UPTIME_STR:~0,35!      %SystemDrive%\ FREE: !SYS_FREE!
-echo              !TIME_STR:~0,35!      DATE: %DATE%
+echo              !TIME_STR:~0,35!      DATE: !SESSION_DATE!
 echo.
 echo           ================================================================================
 exit /b
@@ -437,7 +451,6 @@ if !errorlevel! neq 0 (echo. & echo %M2%[ INFO ] Operation cancelled. Returning.
 echo. & call :LOG "PROCESS" "RECOVERY" "Initiating manual System Restore Point creation..."
 echo %M2%[ PROCESS ] Ensuring VSS and System Restore Services are running...
 for %%S in (vss swprv srsvc) do call :SVC_ENGINE "%%S" "START"
-timeout /t 2 >nul
 echo %M2%[ PROCESS ] Verifying System Protection status on %SystemDrive%\...
 powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$d='%SystemDrive%\'; $sr=Get-CimInstance -Namespace root\default -Class SystemRestoreConfig -ErrorAction SilentlyContinue | Where-Object Drive -eq $d; if (-not $sr) { Enable-ComputerRestore -Drive $d -ErrorAction SilentlyContinue }"
 echo %M2%[ PROCESS ] Overriding Windows Restore frequency limit...
@@ -534,8 +547,33 @@ if !DISM_ERR! equ 0 (call :LOG "SUCCESS" "RECOVERY" "Drivers successfully export
 echo. & echo %M2%[Press any key to return to Menu...] & pause >nul & goto :MENU
 
 :: --- MAINTENANCE MODULES ---
-:FUNC_TEMP_CLEAN
+:FUNC_AUTO_GEN
 cls & echo.
+echo %M2%[ WARNING ] THIS WILL RUN ALL GENERAL CLEANUP OPERATIONS (1-10).
+echo %M2%[ INFO ] You will only be prompted this one time.
+call :ASK_CONFIRM "Proceed with Automated Cleanup?"
+if !errorlevel! neq 0 (echo. & echo %M2%[ INFO ] Operation cancelled. Returning... & timeout /t 1 >nul & goto :SUB_MAINT_GEN)
+echo.
+call :LOG "PROCESS" "MAINTENANCE" "Initiating Automated General Cleanup sequence (1-10)..."
+set "AUTO_CLEAN=1"
+call :FUNC_TEMP_CLEAN
+call :FUNC_PREFETCH
+call :FUNC_UPDATE
+call :FUNC_CRASHDUMPS
+call :FUNC_THUMBNAILS
+call :FUNC_INVALID_SHORTCUTS
+call :FUNC_EXPLORER_RUN
+call :FUNC_INSTALLER_LEFTOVERS
+call :FUNC_ORPHANED_PROGRAMDATA
+call :FUNC_RECYCLE
+set "AUTO_CLEAN=0"
+echo.
+echo %M2%[ STATUS ] Automated General Cleanup sequence complete.
+call :LOG "SUCCESS" "MAINTENANCE" "Automated sequence completed."
+echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_MAINT_GEN
+
+:FUNC_TEMP_CLEAN
+if "!AUTO_CLEAN!"=="0" (cls & echo.)
 call :LOG "PROCESS" "MAINTENANCE" "Initiating comprehensive Temp file cleanup..."
 call :TRACK_SPACE_START "%temp%|%WINDIR%\Temp"
 echo %M2%[ PROCESS ] Purging User Temp folder...
@@ -545,22 +583,26 @@ call :PURGE_DIR "%WINDIR%\Temp"
 call :TRACK_SPACE_END
 echo %M2%[ STATUS ] Comprehensive Temp cleanup complete (In-use files bypassed).
 call :LOG "SUCCESS" "MAINTENANCE" "Temp file cleanup cycle complete."
+if "!AUTO_CLEAN!"=="1" exit /b
 echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_MAINT_GEN
 
 :FUNC_PREFETCH
+if "!AUTO_CLEAN!"=="1" goto :SKIP_PREFETCH_PROMPT
 cls & echo.
-call :LOG "PROCESS" "MAINTENANCE" "Initiating Prefetch directory cleanup..."
 echo %M2%[ INFO ] On very old HDD systems, this may temporarily increase boot time slightly.
+:SKIP_PREFETCH_PROMPT
+call :LOG "PROCESS" "MAINTENANCE" "Initiating Prefetch directory cleanup..."
 call :TRACK_SPACE_START "%WINDIR%\Prefetch"
 echo %M2%[ PROCESS ] Clearing Prefetch directory...
 del /q /s /f /a "%WINDIR%\Prefetch\*.*" >nul 2>&1
 call :TRACK_SPACE_END
 echo %M2%[ STATUS ] Cleanup cycle complete (In-use files bypassed).
 call :LOG "SUCCESS" "MAINTENANCE" "Prefetch cache cleared."
+if "!AUTO_CLEAN!"=="1" exit /b
 echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_MAINT_GEN
 
 :FUNC_UPDATE
-cls & echo.
+if "!AUTO_CLEAN!"=="0" (cls & echo.)
 call :LOG "PROCESS" "MAINTENANCE" "Initiating Windows Update Cache reset..."
 call :TRACK_SPACE_START "%WINDIR%\SoftwareDistribution\Download"
 echo %M2%[ PROCESS ] Halting Windows Update Services...
@@ -572,15 +614,18 @@ for %%S in (wuauserv bits) do call :SVC_ENGINE "%%S" "START"
 call :TRACK_SPACE_END
 echo %M2%[ STATUS ] Windows Update cache reset.
 call :LOG "SUCCESS" "MAINTENANCE" "Windows Update Download Cache successfully cleared."
+if "!AUTO_CLEAN!"=="1" exit /b
 echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_MAINT_GEN
 
 :FUNC_CRASHDUMPS
+if "!AUTO_CLEAN!"=="1" goto :SKIP_CRASH_PROMPT
 cls & echo.
 echo %M2%[ WARNING ] THIS WILL DELETE ERROR REPORTS AND CRASH DUMPS (MINIDUMPS).
 echo %M2%[ WARNING ] THESE FILES ARE OFTEN NEEDED TO DIAGNOSE SYSTEM CRASHES.
 call :ASK_CONFIRM "Proceed?"
 if !errorlevel! neq 0 (echo. & echo %M2%[ INFO ] Operation cancelled. Returning... & timeout /t 1 >nul & goto :SUB_MAINT_GEN)
 echo.
+:SKIP_CRASH_PROMPT
 call :LOG "PROCESS" "MAINTENANCE" "Purging Error Reports and Minidumps..."
 call :TRACK_SPACE_START "%ProgramData%\Microsoft\Windows\WER|%WINDIR%\Minidump"
 echo %M2%[ PROCESS ] Purging Windows Error Reporting (WER) and Minidumps...
@@ -589,10 +634,11 @@ call :PURGE_DIR "%WINDIR%\Minidump"
 call :TRACK_SPACE_END
 echo %M2%[ STATUS ] Crash dumps and error reports successfully cleared.
 call :LOG "SUCCESS" "MAINTENANCE" "Crash Dumps and WER cleared."
+if "!AUTO_CLEAN!"=="1" exit /b
 echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_MAINT_GEN
 
 :FUNC_THUMBNAILS
-cls & echo.
+if "!AUTO_CLEAN!"=="0" (cls & echo.)
 call :LOG "PROCESS" "MAINTENANCE" "Initiating Windows Thumbnail Cache cleanup..."
 call :TRACK_SPACE_START
 echo %M2%[ PROCESS ] Purging Windows Thumbnail Cache...
@@ -600,14 +646,70 @@ del /q /f "%LocalAppData%\Microsoft\Windows\Explorer\thumbcache_*.db" >nul 2>&1
 call :TRACK_SPACE_END
 echo %M2%[ STATUS ] Thumbnail cache cleanup cycle complete.
 call :LOG "SUCCESS" "MAINTENANCE" "Thumbnail Cache database purged."
+if "!AUTO_CLEAN!"=="1" exit /b
+echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_MAINT_GEN
+
+:FUNC_INVALID_SHORTCUTS
+if "!AUTO_CLEAN!"=="0" (cls & echo.)
+call :LOG "PROCESS" "MAINTENANCE" "Clearing Invalid User Shortcuts..."
+call :TRACK_SPACE_START "%AppData%\Microsoft\Windows\Recent"
+echo %M2%[ PROCESS ] Sweeping recent item and destination shortcut caches...
+del /q /s /f /a "%AppData%\Microsoft\Windows\Recent\*.lnk" >nul 2>&1
+del /q /s /f /a "%AppData%\Microsoft\Windows\Recent\AutomaticDestinations\*" >nul 2>&1
+del /q /s /f /a "%AppData%\Microsoft\Windows\Recent\CustomDestinations\*" >nul 2>&1
+call :TRACK_SPACE_END
+echo %M2%[ STATUS ] Invalid user shortcuts swept.
+call :LOG "SUCCESS" "MAINTENANCE" "Invalid user shortcuts successfully cleared."
+if "!AUTO_CLEAN!"=="1" exit /b
+echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_MAINT_GEN
+
+:FUNC_EXPLORER_RUN
+if "!AUTO_CLEAN!"=="0" (cls & echo.)
+call :LOG "PROCESS" "MAINTENANCE" "Clearing Explorer Run History..."
+echo %M2%[ PROCESS ] Wiping Windows Explorer RunMRU registry keys...
+reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU" /f >nul 2>&1
+echo %M2%[ STATUS ] Explorer Run History cleared.
+call :LOG "SUCCESS" "MAINTENANCE" "Explorer Run History successfully cleared."
+if "!AUTO_CLEAN!"=="1" exit /b
+echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_MAINT_GEN
+
+:FUNC_INSTALLER_LEFTOVERS
+if "!AUTO_CLEAN!"=="0" (cls & echo.)
+call :LOG "PROCESS" "MAINTENANCE" "Cleaning Installer Leftovers..."
+:: Uses GLOBAL tracking mode to avoid hanging the CPU while measuring %WINDIR%
+call :TRACK_SPACE_START
+echo %M2%[ PROCESS ] Purging orphaned installation logs in Windows directory...
+del /q /f "%WINDIR%\*.log" >nul 2>&1
+del /q /f "%WINDIR%\setuptxt.txt" >nul 2>&1
+call :TRACK_SPACE_END
+echo %M2%[ STATUS ] Installer leftovers cleaned.
+call :LOG "SUCCESS" "MAINTENANCE" "Installer leftovers successfully purged."
+if "!AUTO_CLEAN!"=="1" exit /b
+echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_MAINT_GEN
+
+:FUNC_ORPHANED_PROGRAMDATA
+if "!AUTO_CLEAN!"=="0" (cls & echo.)
+call :LOG "PROCESS" "MAINTENANCE" "Cleaning Orphaned ProgramData..."
+call :TRACK_SPACE_START "%ProgramData%\Spotify\Data|%ProgramData%\NVIDIA Corporation\NV_Cache|%ProgramData%\Discord\Cache"
+echo %M2%[ PROCESS ] Purging known vendor cache directories...
+for %%D in ("Spotify\Data" "NVIDIA Corporation\NV_Cache" "Discord\Cache") do (
+    if exist "%ProgramData%\%%~D" call :PURGE_DIR "%ProgramData%\%%~D"
+)
+call :TRACK_SPACE_END
+echo %M2%[ STATUS ] Orphaned ProgramData cleaned.
+call :LOG "SUCCESS" "MAINTENANCE" "Orphaned ProgramData caches purged."
+if "!AUTO_CLEAN!"=="1" exit /b
 echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_MAINT_GEN
 
 :FUNC_RECYCLE
+if "!AUTO_CLEAN!"=="1" goto :SKIP_RECYCLE_PROMPT
 cls & echo.
 echo %M2%[ WARNING ] THIS WILL PERMANENTLY DELETE ALL ITEMS IN ALL RECYCLE BINS.
 call :ASK_CONFIRM "Proceed?"
 if !errorlevel! neq 0 (echo. & echo %M2%[ INFO ] Operation cancelled. Returning... & timeout /t 1 >nul & goto :SUB_MAINT_GEN)
 echo.
+:SKIP_RECYCLE_PROMPT
 call :LOG "PROCESS" "MAINTENANCE" "Emptying system recycle bins..."
 call :TRACK_SPACE_START
 echo %M2%[ PROCESS ] Emptying all system recycle bins across all drives...
@@ -615,6 +717,7 @@ powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "
 call :TRACK_SPACE_END
 echo %M2%[ STATUS ] Operations dispatched to all connected drives.
 call :LOG "SUCCESS" "MAINTENANCE" "Recycle Bins emptied successfully."
+if "!AUTO_CLEAN!"=="1" exit /b
 echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_MAINT_GEN
 
 :FUNC_ICON_REBUILD
@@ -875,8 +978,15 @@ call :LOG "PROCESS" "MAINTENANCE" "Initiating Windows.old Purge. Bypassing Trust
 call :TRACK_SPACE_START "%SystemDrive%\Windows.old"
 echo %M2%[ PROCESS ] Stripping TrustedInstaller permissions from Windows.old...
 echo %M2%[ INFO ] This may take several minutes depending on folder size...
+
+:: Capture error levels for diagnostic logging
 echo Y| takeown /F "%SystemDrive%\Windows.old" /A /R >nul 2>&1
+set "OWN_ERR=!errorlevel!"
+if !OWN_ERR! neq 0 call :LOG "WARNING" "MAINTENANCE" "takeown encountered issues (Code: !OWN_ERR!). Some files may resist permission changes."
+
 icacls "%SystemDrive%\Windows.old" /grant Administrators:F /T /C /Q >nul 2>&1
+set "ACL_ERR=!errorlevel!"
+if !ACL_ERR! neq 0 call :LOG "WARNING" "MAINTENANCE" "icacls encountered issues (Code: !ACL_ERR!). Some files may resist deletion."
 
 echo %M2%[ PROCESS ] Deleting previous OS files...
 rd /s /q "%SystemDrive%\Windows.old" >nul 2>&1
@@ -886,7 +996,7 @@ echo.
 if exist "%SystemDrive%\Windows.old" (
     echo %M2%[ WARNING ] Some files were locked by the system. Partial deletion achieved.
     echo %M2%[ INFO ] A system reboot and manual deletion may be required to clear the rest.
-    call :LOG "WARNING" "MAINTENANCE" "Windows.old partially purged (some files locked)."
+    call :LOG "WARNING" "MAINTENANCE" "Windows.old partially purged (some files locked or permission denied)."
 ) else (
     echo %M2%[ STATUS ] Windows.old previous installation successfully deleted.
     call :LOG "SUCCESS" "MAINTENANCE" "Windows.old directory successfully purged."
@@ -965,10 +1075,18 @@ if !errorlevel! neq 0 (echo. & echo %M2%[ INFO ] Operation cancelled. Returning.
 echo.
 call :LOG "PROCESS" "DIAGNOSTICS" "Scheduling offline CHKDSK repair for next reboot..."
 echo %M2%[ PROCESS ] Injecting schedule command...
-echo y| chkdsk %SystemDrive% /f /x >nul 2>&1
-echo %M2%[ STATUS ] Repair successfully scheduled for the next system restart.
-call :LOG "SUCCESS" "DIAGNOSTICS" "Offline CHKDSK repair scheduled successfully."
-echo. & call :ASK_REBOOT "File System Repair"
+echo y| chkdsk %SystemDrive% /f >nul 2>&1
+set "CHK_ERR=!errorlevel!"
+
+if !CHK_ERR! equ 0 (
+    echo %M2%[ STATUS ] Repair successfully scheduled for the next system restart.
+    call :LOG "SUCCESS" "DIAGNOSTICS" "Offline CHKDSK repair scheduled successfully."
+    echo. & call :ASK_REBOOT "File System Repair"
+) else (
+    echo %M2%[ ERROR ] Failed to schedule repair ^(Exit Code: !CHK_ERR!^). Check registry permissions.
+    call :LOG "ERROR" "DIAGNOSTICS" "Failed to schedule offline CHKDSK repair (Exit Code: !CHK_ERR!)."
+    echo. & echo %M2%[Press any key to return...] & pause >nul
+)
 goto :SUB_DIAG_CHKDSK
 
 :FUNC_CHKDSK_CANCEL
@@ -1419,8 +1537,11 @@ if !DOWNLOAD_REQUIRED! equ 1 (
     echo %M2%[ INFO ] Note: Download speeds are often limited by Microsoft's servers.
     echo %M2%[ INFO ] This may take several minutes. Please wait...
     
-    :: Uses Invoke-WebRequest to fetch the payload dynamically based on architecture
-    if /i "%PROCESSOR_ARCHITECTURE%"=="AMD64" (set "MSERT_URL=https://go.microsoft.com/fwlink/?LinkId=212732") else (set "MSERT_URL=https://go.microsoft.com/fwlink/?LinkId=212733")
+    :: Dynamic payload detection for x86, x64, and ARM64 architectures
+    set "MSERT_URL=https://go.microsoft.com/fwlink/?LinkId=212733"
+    if /i "%PROCESSOR_ARCHITECTURE%"=="AMD64" set "MSERT_URL=https://go.microsoft.com/fwlink/?LinkId=212732"
+    if /i "%PROCESSOR_ARCHITECTURE%"=="ARM64" set "MSERT_URL=https://go.microsoft.com/fwlink/?LinkId=380484"
+    
     powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -Command "try { Invoke-WebRequest -Uri '!MSERT_URL!' -OutFile '!MSERT_EXE!' -UseBasicParsing -ErrorAction Stop } catch { exit 1 }"
     
     if !errorlevel! neq 0 (
@@ -1470,7 +1591,25 @@ if not exist "!FW_DIR!" mkdir "!FW_DIR!" >nul 2>&1
 echo %M2%[ PROCESS ] Exporting current firewall rules...
 netsh advfirewall export "!FW_DIR!\Firewall_!FILE_TIME!.wfw" >nul 2>&1
 set "FW_BK_ERR=!errorlevel!"
-if !FW_BK_ERR! equ 0 (echo %M2%[ STATUS ] Backup successfully saved.) else (echo %M2%[ WARNING ] Failed to export firewall backup. & call :LOG "WARNING" "SECURITY" "Firewall export failed." & call :ASK_CONFIRM "Continue with reset anyway?" & if !errorlevel! neq 0 (echo. & echo %M2%[ INFO ] Operation cancelled. Returning... & timeout /t 2 >nul & goto :SUB_SECURITY))
+
+:: Evaluate Backup Success Linearly
+if !FW_BK_ERR! equ 0 (
+    echo %M2%[ STATUS ] Backup successfully saved.
+    goto :EXECUTE_FW_RESET
+)
+
+:: Handle Backup Failure gracefully
+echo %M2%[ WARNING ] Failed to export firewall backup.
+call :LOG "WARNING" "SECURITY" "Firewall export failed."
+call :ASK_CONFIRM "Continue with reset anyway?"
+if !errorlevel! neq 0 (
+    echo. 
+    echo %M2%[ INFO ] Operation cancelled. Returning... 
+    timeout /t 2 >nul 
+    goto :SUB_SECURITY
+)
+
+:EXECUTE_FW_RESET
 echo.
 echo %M2%[ PROCESS ] Restoring default Windows Firewall policy...
 netsh advfirewall reset >nul 2>&1
@@ -1512,7 +1651,20 @@ if !errorlevel! neq 0 (
 
 call :LOG "INFO" "SECURITY" "System rebooting into Safe Mode for Defender cleanup."
 echo %M2%[ STATUS ] System will now restart. Please re-run Primus after booting.
-shutdown /r /t 5 /c "Primus: Rebooting into Safe Mode..."
+
+:: Suppress native text, capture error, and execute transactional rollback if reboot fails
+shutdown /r /t 5 /c "Primus: Rebooting into Safe Mode..." >nul 2>&1
+set "SHUTDOWN_ERR=!errorlevel!"
+
+if !SHUTDOWN_ERR! neq 0 (
+    echo %M2%[ ERROR ] Reboot command failed ^(Exit Code: !SHUTDOWN_ERR!^).
+    echo %M2%[ PROCESS ] Reverting Safe Mode boot configuration...
+    bcdedit /deletevalue {current} safeboot >nul 2>&1
+    call :LOG "ERROR" "SECURITY" "Shutdown blocked (Code: !SHUTDOWN_ERR!). Safe Mode flag safely removed."
+    echo.
+    echo %M2%[Press any key to return...] & pause >nul
+    goto :SUB_SECURITY
+)
 exit
 
 :: ===========================================================================
@@ -1715,7 +1867,6 @@ echo %M2%[ PROCESS ] Disabling Cortana, Bing Search ^& Taskbar Suggestions...
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v "BingSearchEnabled" /t REG_DWORD /d 0 /f >nul 2>&1
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v "CortanaConsent" /t REG_DWORD /d 0 /f >nul 2>&1
 :: Kill Search Box Suggestions (The "River Island" fix)
-if not exist "HKCU\Software\Policies\Microsoft\Windows\Explorer" mkdir "HKCU\Software\Policies\Microsoft\Windows\Explorer" >nul 2>&1
 reg add "HKCU\Software\Policies\Microsoft\Windows\Explorer" /v "DisableSearchBoxSuggestions" /t REG_DWORD /d 1 /f >nul 2>&1
 :: Classic Policy Keys (Backup)
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v "DisableWebSearch" /t REG_DWORD /d 1 /f >nul 2>&1
@@ -1817,11 +1968,12 @@ echo.
 echo             [ LOGGING SYSTEM ]
 echo              Location:  %ProgramData%\Primus\Logs\
 echo              Retention: 30 Days (Automatic background cleanup)
-echo              Format:    Primus_YYYYMMDD_HHMMSS.log
+echo              Format:    Primus_YYYYMMDD_HHMMSS.log (Locale-independent ISO)
 echo.
 echo             [ SAFETY PROTOCOLS ]
 echo              * Always create a Restore Point before major operations.
 echo              * Active/In-use files are automatically skipped during cleanup.
+echo              * WMI crash-guards and transactional rollbacks protect OS state.
 echo              * All destructive operations require Y/N confirmation.
 echo.
 echo             [ SUPPORT ]
@@ -1866,8 +2018,8 @@ echo              Optimises drives via SSD trimming and HDD defragmentation, man
 echo              System Compression (CompactOS), and caps VSS/Reserved Storage.
 echo.
 echo             [ SECURITY SUITE ]
-echo              Downloads Microsoft Safety Scanner, resets Firewall configurations,
-echo              and utilizes Safe Mode to deep-clean Defender scan history.
+echo              Downloads Microsoft Safety Scanner (x86/x64/ARM64 auto-detect), 
+echo              resets Firewall profiles, and utilizes Safe Mode for Defender cleans.
 echo.
 echo             [ PRIVACY ^& TELEMETRY ]
 echo              Disables OS data collection, Cortana web integration, CEIP tasks,
@@ -1992,7 +2144,8 @@ exit /b
 
 :CHECK_FREE_SPACE
 :: Evaluates if %SystemDrive% has at least 2GB of free space to prevent corruption during heavy operations.
-powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$f = (Get-CimInstance Win32_LogicalDisk -Filter \"DeviceID='%SystemDrive%'\").FreeSpace; if ($f -lt 2GB) { exit 1 } else { exit 0 }"
+:: Gracefully falls back to bypass (exit 0) if the WMI repository is corrupted.
+powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$f = (Get-CimInstance Win32_LogicalDisk -Filter \"DeviceID='%SystemDrive%'\" -ErrorAction SilentlyContinue).FreeSpace; if ($null -eq $f) { exit 0 } elseif ($f -lt 2GB) { exit 1 } else { exit 0 }"
 if !errorlevel! equ 1 (
     echo.
     echo %M2%[ WARNING ] CRITICAL: Low disk space detected on %SystemDrive%\ ^(!SYS_FREE!^).
@@ -2069,16 +2222,26 @@ set "log_cat=!log_cat:~0,12!"
 set "log_time=!TIME:~0,8!"
 set "log_time=!log_time: =0!"
 
-:: Append to log file
-echo [%DATE% !log_time!] [!log_cat!] [!log_lvl!] : !log_msg! >> "!LOG_FILE!"
+:: Append to log file using the globally defined SESSION_DATE
+echo [!SESSION_DATE! !log_time!] [!log_cat!] [!log_lvl!] : !log_msg! >> "!LOG_FILE!"
 exit /b
 
 :FUNC_EXIT
 :: Calculate formatted totals and exact end time simultaneously via PowerShell
 if not defined SESSION_TOTAL_BYTES set "SESSION_TOTAL_BYTES=0"
-for /f "tokens=1,2 delims=#" %%A in ('powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "[long]$t = $env:SESSION_TOTAL_BYTES; $fmt = if ($t -le 0) { '0.00 KB' } elseif ($t -ge 1GB) { '{0:N2} GB' -f ($t/1GB) } elseif ($t -ge 1MB) { '{0:N2} MB' -f ($t/1MB) } else { '{0:N2} KB' -f ($t/1KB) }; $end = (Get-Date).ToString('HH:mm'); '{0}#{1}' -f $fmt, $end"') do (
+set "SESSION_TOTAL_FORMATTED="
+set "SESSION_END_TIME="
+
+for /f "tokens=1,2 delims=#" %%A in ('powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "[long]$t = $env:SESSION_TOTAL_BYTES; $fmt = if ($t -le 0) { '0.00 KB' } elseif ($t -ge 1GB) { '{0:N2} GB' -f ($t/1GB) } elseif ($t -ge 1MB) { '{0:N2} MB' -f ($t/1MB) } else { '{0:N2} KB' -f ($t/1KB) }; $end = (Get-Date).ToString('HH:mm'); '{0}#{1}' -f $fmt, $end" 2^>nul') do (
     set "SESSION_TOTAL_FORMATTED=%%A"
     set "SESSION_END_TIME=%%B"
+)
+
+:: Graceful Native Fallbacks in case PowerShell fails or is blocked
+if not defined SESSION_TOTAL_FORMATTED set "SESSION_TOTAL_FORMATTED=!SESSION_TOTAL_BYTES! Bytes"
+if not defined SESSION_END_TIME (
+    set "SESSION_END_TIME=!TIME:~0,5!"
+    set "SESSION_END_TIME=!SESSION_END_TIME: =0!"
 )
 
 call :LOG "SYSTEM" "CORE" "Primus v!PRIMUS_VERSION! Session Terminated Safely."
@@ -2105,14 +2268,14 @@ echo           =================================================================
 echo                                   Primus Session Terminated Safely
 echo           ================================================================================
 echo.
-echo               Session Start:   !CURRENT_TIME!
-echo               Session End:     !SESSION_END_TIME!
-echo               Space Reclaimed: !SESSION_TOTAL_FORMATTED!
-echo               Log File:        !LOG_FILE!
+echo              Session Start:   !CURRENT_TIME!
+echo              Session End:     !SESSION_END_TIME!
+echo              Space Reclaimed: !SESSION_TOTAL_FORMATTED!
+echo              Log File:        !LOG_FILE!
 echo.
 echo           ================================================================================
-echo                                         Closing Application...
+echo                                        Quitting Application...                            
 echo           ================================================================================
-timeout /t 3 >nul
+timeout /t 5 >nul
 endlocal
 exit
