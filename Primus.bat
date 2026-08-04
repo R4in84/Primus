@@ -33,8 +33,8 @@ setlocal EnableDelayedExpansion
 for /f %%A in ('"prompt $H &echo on &for %%B in (1) do rem"') do set "BS=%%A"
 
 :: Version Information
-set "PRIMUS_VERSION=1.3.0"
-set "PRIMUS_BUILD=20260602"
+set "PRIMUS_VERSION=1.3.1"
+set "PRIMUS_BUILD=20260804"
 
 :: Initialise Session Variables
 set "SESSION_TOTAL_BYTES=0"
@@ -256,23 +256,32 @@ goto :SUB_MAINT_GEN
 :SUB_MAINT_ADV
 call :PRINT_SUB_HEADER "DEEP SYSTEM CLEANUP"
 echo %M1%[1] Rebuild Icon ^& Thumb Cache             [2] Rebuild Windows Font Cache
-echo %M1%[3] Browser Cache Deep Clean               [4] Clear DirectX Shader Cache
-echo %M1%[5] Clean Delivery Optimisation            [6] Disk Cleanup Utility
-echo %M1%[7] Clean WinSxS Component Store           [8] Reset Windows Store Cache
-echo %M1%[9] Purge Windows.old Installation        [10] Clear System Event Logs
+echo %M1%[3] Browser Cache Deep Clean               [4] Clear Discord Cache
+echo %M1%[5] Clear MS Teams Cache                   [6] Clear Xbox Gameplay ^& App Cache
+echo %M1%[7] Clear BranchCache ^& Patch Temps        [8] Clear DirectX Shader Cache
+echo %M1%[9] Clean Delivery Optimisation            [10] Disk Cleanup Utility
+echo %M1%[11] Clean Old Driver Packages             [12] Clear Ghost / Hidden Devices
+echo %M1%[13] Clean WinSxS Component Store          [14] Reset Windows Store Cache
+echo %M1%[15] Purge Windows.old Installation        [16] Clear System Event Logs
 call :MENU_FOOTER "R" "RETURN TO MAIN MENU"
 set "choice="
 set /p "choice=%BS%%M0%[Selection] :> "
 if "!choice!"=="1" goto :FUNC_ICON_REBUILD
 if "!choice!"=="2" goto :FUNC_FONT_CACHE
 if "!choice!"=="3" goto :FUNC_BROWSER_CLEAN
-if "!choice!"=="4" goto :FUNC_DIRECTX_CACHE
-if "!choice!"=="5" goto :FUNC_DELIVERY_OPT
-if "!choice!"=="6" goto :FUNC_DISKCLEAN
-if "!choice!"=="7" goto :FUNC_WINSXS
-if "!choice!"=="8" goto :FUNC_WSRESET
-if "!choice!"=="9" goto :FUNC_WINDOWS_OLD
-if "!choice!"=="10" goto :FUNC_EVENTLOGS
+if "!choice!"=="4" goto :FUNC_DISCORD_CLEAN
+if "!choice!"=="5" goto :FUNC_TEAMS_CLEAN
+if "!choice!"=="6" goto :FUNC_XBOX_CLEAN
+if "!choice!"=="7" goto :FUNC_BRANCHCACHE
+if "!choice!"=="8" goto :FUNC_DIRECTX_CACHE
+if "!choice!"=="9" goto :FUNC_DELIVERY_OPT
+if "!choice!"=="10" goto :FUNC_DISKCLEAN
+if "!choice!"=="11" goto :FUNC_DRIVER_CLEAN
+if "!choice!"=="12" goto :FUNC_GHOST_CLEAN
+if "!choice!"=="13" goto :FUNC_WINSXS
+if "!choice!"=="14" goto :FUNC_WSRESET
+if "!choice!"=="15" goto :FUNC_WINDOWS_OLD
+if "!choice!"=="16" goto :FUNC_EVENTLOGS
 if /i "!choice!"=="R" goto :MENU
 goto :SUB_MAINT_ADV
 
@@ -791,6 +800,98 @@ echo %M2%[ STATUS ] Browser Deep Clean cycle complete.
 call :LOG "SUCCESS" "MAINTENANCE" "Browser Deep Clean cycle completed successfully."
 echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_MAINT_ADV
 
+:FUNC_DISCORD_CLEAN
+cls & echo.
+echo %M2%[ WARNING ] DISCORD MUST BE CLOSED TO PERFORM A DEEP CLEAN.
+call :ASK_CONFIRM "Proceed with Deep Clean?"
+if !errorlevel! neq 0 (echo. & echo %M2%[ INFO ] Operation cancelled. Returning... & timeout /t 1 >nul & goto :SUB_MAINT_ADV)
+echo.
+call :LOG "PROCESS" "MAINTENANCE" "Initiating Discord Cache Clean..."
+call :TRACK_SPACE_START
+echo %M2%[ PROCESS ] Halting Discord processes...
+taskkill /f /im Discord.exe >nul 2>&1
+echo %M2%[ PROCESS ] Purging Discord caches...
+if exist "%AppData%\discord\Cache" call :PURGE_DIR "%AppData%\discord\Cache"
+if exist "%AppData%\discord\Code Cache" call :PURGE_DIR "%AppData%\discord\Code Cache"
+if exist "%AppData%\discord\GPUCache" call :PURGE_DIR "%AppData%\discord\GPUCache"
+call :TRACK_SPACE_END
+echo %M2%[ STATUS ] Discord Cache successfully cleared.
+call :LOG "SUCCESS" "MAINTENANCE" "Discord caches purged."
+echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_MAINT_ADV
+
+:FUNC_TEAMS_CLEAN
+cls & echo.
+echo %M2%[ WARNING ] MS TEAMS MUST BE CLOSED TO PERFORM A DEEP CLEAN.
+call :ASK_CONFIRM "Proceed with Deep Clean?"
+if !errorlevel! neq 0 (echo. & echo %M2%[ INFO ] Operation cancelled. Returning... & timeout /t 1 >nul & goto :SUB_MAINT_ADV)
+echo.
+call :LOG "PROCESS" "MAINTENANCE" "Initiating MS Teams Cache Clean..."
+call :TRACK_SPACE_START
+echo %M2%[ PROCESS ] Halting MS Teams processes...
+taskkill /f /im Teams.exe >nul 2>&1
+taskkill /f /im ms-teams.exe >nul 2>&1
+taskkill /f /im msteams.exe >nul 2>&1
+echo %M2%[ PROCESS ] Purging Classic and New Teams caches...
+if exist "%AppData%\Microsoft\Teams\Cache" call :PURGE_DIR "%AppData%\Microsoft\Teams\Cache"
+if exist "%AppData%\Microsoft\Teams\Code Cache" call :PURGE_DIR "%AppData%\Microsoft\Teams\Code Cache"
+if exist "%AppData%\Microsoft\Teams\GPUCache" call :PURGE_DIR "%AppData%\Microsoft\Teams\GPUCache"
+if exist "%LocalAppData%\Packages\MSTeams_8wekyb3d8bbwe\LocalCache\Microsoft\MSTeams\Cache" call :PURGE_DIR "%LocalAppData%\Packages\MSTeams_8wekyb3d8bbwe\LocalCache\Microsoft\MSTeams\Cache"
+if exist "%LocalAppData%\Packages\MSTeams_8wekyb3d8bbwe\LocalCache\Microsoft\MSTeams\EBWebView\GPUCache" call :PURGE_DIR "%LocalAppData%\Packages\MSTeams_8wekyb3d8bbwe\LocalCache\Microsoft\MSTeams\EBWebView\GPUCache"
+call :TRACK_SPACE_END
+echo %M2%[ STATUS ] MS Teams Cache successfully cleared.
+call :LOG "SUCCESS" "MAINTENANCE" "MS Teams caches purged."
+echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_MAINT_ADV
+
+:FUNC_XBOX_CLEAN
+cls & echo.
+echo %M2%[ WARNING ] XBOX APPS MUST BE CLOSED TO PERFORM A CLEAN.
+call :ASK_CONFIRM "Proceed with Deep Clean?"
+if !errorlevel! neq 0 (echo. & echo %M2%[ INFO ] Operation cancelled. Returning... & timeout /t 1 >nul & goto :SUB_MAINT_ADV)
+echo.
+call :LOG "PROCESS" "MAINTENANCE" "Initiating Xbox Cache Clean..."
+call :TRACK_SPACE_START
+echo %M2%[ PROCESS ] Halting Xbox background processes and services...
+taskkill /f /im XboxApp.exe >nul 2>&1
+taskkill /f /im XboxPcApp.exe >nul 2>&1
+taskkill /f /im GameBar.exe >nul 2>&1
+taskkill /f /im GameBarFTServer.exe >nul 2>&1
+for %%S in (XblAuthManager XblGameSave XboxNetApiSvc) do call :SVC_ENGINE "%%S" "STOP"
+
+echo %M2%[ PROCESS ] Purging Xbox App and Gameplay caches...
+for %%P in (
+    "Microsoft.XboxApp_8wekyb3d8bbwe"
+    "Microsoft.XboxGamingOverlay_8wekyb3d8bbwe"
+    "Microsoft.XboxIdentityProvider_8wekyb3d8bbwe"
+    "Microsoft.XboxSpeechToTextOverlay_8wekyb3d8bbwe"
+    "Microsoft.GamingApp_8wekyb3d8bbwe"
+) do (
+    if exist "%LocalAppData%\Packages\%%~P\LocalCache" call :PURGE_DIR "%LocalAppData%\Packages\%%~P\LocalCache"
+    if exist "%LocalAppData%\Packages\%%~P\AC\INetCache" call :PURGE_DIR "%LocalAppData%\Packages\%%~P\AC\INetCache"
+    if exist "%LocalAppData%\Packages\%%~P\AC\Temp" call :PURGE_DIR "%LocalAppData%\Packages\%%~P\AC\Temp"
+)
+
+call :TRACK_SPACE_END
+echo %M2%[ STATUS ] Xbox Live and App Cache successfully cleared.
+call :LOG "SUCCESS" "MAINTENANCE" "Xbox caches purged."
+echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_MAINT_ADV
+
+:FUNC_BRANCHCACHE
+cls & echo.
+echo %M2%[ INFO ] This flushes the local BranchCache and Windows patch temp files.
+call :ASK_CONFIRM "Proceed with Cache Flush?"
+if !errorlevel! neq 0 (echo. & echo %M2%[ INFO ] Operation cancelled. Returning... & timeout /t 1 >nul & goto :SUB_MAINT_ADV)
+echo.
+call :LOG "PROCESS" "MAINTENANCE" "Initiating BranchCache & Patch Temp flush..."
+call :TRACK_SPACE_START
+echo %M2%[ PROCESS ] Flushing Windows BranchCache...
+netsh branchcache flush >nul 2>&1
+echo %M2%[ PROCESS ] Purging Installer Patch Caches...
+if exist "%WINDIR%\Installer\$PatchCache$" call :PURGE_DIR "%WINDIR%\Installer\$PatchCache$"
+call :TRACK_SPACE_END
+echo %M2%[ STATUS ] BranchCache and Patch Temp Arrays successfully cleared.
+call :LOG "SUCCESS" "MAINTENANCE" "BranchCache and Patch Temps flushed."
+echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_MAINT_ADV
+
 :FUNC_DIRECTX_CACHE
 cls & echo.
 echo %M2%[ INFO ] Clearing shader caches can fix graphical glitches and stuttering.
@@ -861,6 +962,40 @@ start /wait cleanmgr /d !target_drive!
 call :TRACK_SPACE_END
 echo %M2%[ STATUS ] Disk Cleanup Utility session terminated.
 call :LOG "SUCCESS" "MAINTENANCE" "Disk Cleanup Utility completed for Drive !target_drive!:."
+echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_MAINT_ADV
+
+:FUNC_DRIVER_CLEAN
+cls & echo.
+echo %M2%[ WARNING ] This attempts to remove old, superseded driver packages.
+echo %M2%[ INFO ] Active and in-use drivers are naturally protected by Windows.
+call :ASK_CONFIRM "Proceed with Driver Cleanup?"
+if !errorlevel! neq 0 (echo. & echo %M2%[ INFO ] Operation cancelled. Returning... & timeout /t 1 >nul & goto :SUB_MAINT_ADV)
+echo.
+call :LOG "PROCESS" "MAINTENANCE" "Initiating Driver Store cleanup..."
+call :TRACK_SPACE_START "%WINDIR%\System32\DriverStore\FileRepository"
+echo %M2%[ PROCESS ] Enumerating Driver Store (This may take several minutes)...
+:: The /delete-driver command fails gracefully on active drivers if /force is omitted
+for /f "tokens=3" %%A in ('pnputil.exe /enum-drivers ^| findstr /i "Published Name:"') do (
+    pnputil.exe /delete-driver %%A >nul 2>&1
+)
+call :TRACK_SPACE_END
+echo %M2%[ STATUS ] Orphaned and superseded driver packages purged.
+call :LOG "SUCCESS" "MAINTENANCE" "Old driver packages successfully removed."
+echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_MAINT_ADV
+
+:FUNC_GHOST_CLEAN
+cls & echo.
+echo %M2%[ WARNING ] THIS WILL REMOVE ALL DISCONNECTED AND GHOST DEVICES.
+echo %M2%[ INFO ] Unplugged USBs, mice, and Bluetooth devices will be forgotten.
+echo %M2%[ INFO ] They will automatically reinstall the next time they are plugged in.
+call :ASK_CONFIRM "Proceed with Ghost Device Cleanup?"
+if !errorlevel! neq 0 (echo. & echo %M2%[ INFO ] Operation cancelled. Returning... & timeout /t 1 >nul & goto :SUB_MAINT_ADV)
+echo.
+call :LOG "PROCESS" "MAINTENANCE" "Initiating Ghost Device removal..."
+echo %M2%[ PROCESS ] Identifying and safely removing non-present devices...
+:: We strictly ignore ROOT, SWD, HTREE, and DISPLAY to prevent breaking virtual hardware
+powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$count=0; $ghosts=Get-PnpDevice -PresentOnly:$false -ErrorAction SilentlyContinue | Where-Object { $_.InstanceId -notmatch '^(ROOT|SWD|HTREE|DISPLAY)\\' }; foreach($dev in $ghosts) { try { & pnputil /remove-device $dev.InstanceId | Out-Null; $count++ } catch {} }; Write-Host \"    [ STATUS ] Successfully unregistered $count disconnected ghost device(s).\" -ForegroundColor Green"
+call :LOG "SUCCESS" "MAINTENANCE" "Ghost device cleanup executed successfully."
 echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_MAINT_ADV
 
 :FUNC_WINSXS
