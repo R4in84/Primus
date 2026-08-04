@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D4?logo=windows)](https://www.microsoft.com/windows)
-[![Version](https://img.shields.io/badge/Version-1.3.0-success)](https://github.com/R4in84/Primus/releases)
+[![Version](https://img.shields.io/badge/Version-1.3.1-success)](https://github.com/R4in84/Primus/releases)
 
 > Primus is a collection of scripts I use to maintain, clean, and optimize Windows 10/11. It consolidates various system tasks into a single interface with built-in safety checks and logging.
 
@@ -29,6 +29,10 @@
 - Clear crash dumps and error reports
 - Rebuild icon and font caches (fixes visual glitches)
 - Browser cleanup (supports Chromium, Firefox, Arc, and Opera variants)
+- App cache deep cleaning (Discord, MS Teams, Xbox Gameplay & Apps)
+- Clear BranchCache and Installer Patch Temps
+- Safely purge old and superseded driver packages from the Driver Store
+- Unregister disconnected ghost/hidden devices (preserves virtual hardware adapters)
 - Reset Windows Store cache
 - WinSxS Component Store cleanup (Standard + Deep modes)
 - Clear system event logs
