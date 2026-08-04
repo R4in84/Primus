@@ -1,7 +1,7 @@
 @echo off
 :: ===========================================================================
 :: P R I M U S  -  S Y S T E M   U T I L I T Y
-:: Version 1.3.0 (Build 20260602)
+:: Version 1.3.1 (Build 20260804)
 :: Repository: https://github.com/R4in84/Primus
 :: ===========================================================================
 :: Copyright (c) 2026 Chris Martin
