@@ -2,6 +2,24 @@
 
 All notable changes to Primus will be documented in this file.
 
+## [1.3.1] - 2026-08-04
+
+### ✨ New Features
+
+**Deep System Cleanup Expansion**
+- ✅ Added dedicated Electron app cache cleaning for Discord and MS Teams.
+- ✅ Added Xbox Gameplay & App Cache module, actively halting background services to unlock and purge modern UWP game containers.
+- ✅ Added a native Windows BranchCache and Installer Patch Temp flush utility.
+- ✅ Added Old Driver Package removal (safely enumerates `pnputil` to only remove orphaned/superseded drivers without forcing active ones).
+- ✅ Added Ghost/Hidden Device cleanup (unregisters disconnected hardware while explicitly preserving virtual adapters like VMware and Hyper-V).
+
+### 🔧 Updates & Refinements
+
+**UI Layout & Alignment**
+- 🔧 Reorganized the Deep System Cleanup menu from 10 to 16 options and adjusted column spacing to fit the menu properly.
+
+---
+
 ## [1.3.0] - 2026-06-02
 
 ### ✨ New Features
