@@ -1,7 +1,7 @@
 @echo off
 :: ===========================================================================
 :: P R I M U S  -  S Y S T E M   U T I L I T Y
-:: Version 1.3.1 (Build 20260804)
+:: Version 1.3.2 (Build 20260828)
 :: Repository: https://github.com/R4in84/Primus
 :: ===========================================================================
 :: Copyright (c) 2026 Chris Martin
@@ -33,8 +33,8 @@ setlocal EnableDelayedExpansion
 for /f %%A in ('"prompt $H &echo on &for %%B in (1) do rem"') do set "BS=%%A"
 
 :: Version Information
-set "PRIMUS_VERSION=1.3.1"
-set "PRIMUS_BUILD=20260804"
+set "PRIMUS_VERSION=1.3.2"
+set "PRIMUS_BUILD=20260828"
 
 :: Initialise Session Variables
 set "SESSION_TOTAL_BYTES=0"
@@ -88,9 +88,9 @@ set "BOOT_STATUS=Normal Boot"
 if defined SAFEBOOT_OPTION set "BOOT_STATUS=Safe Mode"
 
 :: Create fixed-width strings for perfect column alignment (35 characters wide)
-set "USER_STR=USER: !USERNAME!                                        "
-set "UPTIME_STR=UPTIME: !SYS_UPTIME!                                        "
-set "TIME_STR=SESSION: !CURRENT_TIME!                                        "
+set "USER_STR=USER: !USERNAME!                                       "
+set "UPTIME_STR=UPTIME: !SYS_UPTIME!                                       "
+set "TIME_STR=SESSION: !CURRENT_TIME!                                       "
 
 :: ---------------------------------------------------------------------------
 :: INITIALISE LOGGING SYSTEM
@@ -233,7 +233,7 @@ echo %M1%[1] Clean All Temp Files           [2] Clear Prefetch Cache
 echo %M1%[3] Clean Update Download Cache    [4] Clean Error Reports ^& Dumps
 echo %M1%[5] Clean Thumbnail Cache          [6] Invalid User Shortcuts
 echo %M1%[7] Clear Explorer Run History     [8] Clean Installer Leftovers
-echo %M1%[9] Orphaned ProgramData          [10] Empty Recycle Bins
+echo %M1%[9] Orphaned ProgramData           [10] Empty Recycle Bins
 echo.
 echo %M1%[X] EXECUTE ALL OPERATIONS (1-10)
 call :MENU_FOOTER "R" "RETURN TO MAIN MENU"
@@ -388,18 +388,24 @@ goto :SUB_SECURITY
 
 :SUB_TELEMETRY
 call :PRINT_SUB_HEADER "PRIVACY & TELEMETRY"
-echo %M1%[1] Windows System Telemetry               [2] Activity History ^& Timeline
-echo %M1%[3] Error Reporting (WER)                  [4] CEIP Scheduled Tasks
-echo %M1%[5] Cortana ^& Web Search                   [6] App Advertising ID
+echo %M1%[1] Windows System Telemetry              [2] Error Reporting (WER)
+echo %M1%[3] CEIP Scheduled Tasks                  [4] Activity History ^& Timeline
+echo %M1%[5] Inking ^& Typing Personalisation       [6] Tailored Experiences
+echo %M1%[7] Feedback Frequency ^& Prompts          [8] Cortana ^& Web Search
+echo %M1%[9] App Advertising ID                    [10] Location Tracking Services
 call :MENU_FOOTER "R" "RETURN TO MAIN MENU"
 set "choice="
 set /p "choice=%BS%%M0%[Selection] :> "
 if "!choice!"=="1" goto :FUNC_TEL_WINDOWS
-if "!choice!"=="2" goto :FUNC_TEL_TIMELINE
-if "!choice!"=="3" goto :FUNC_TEL_WER
-if "!choice!"=="4" goto :FUNC_TEL_CEIP
-if "!choice!"=="5" goto :FUNC_TEL_CORTANA
-if "!choice!"=="6" goto :FUNC_TEL_APPID
+if "!choice!"=="2" goto :FUNC_TEL_WER
+if "!choice!"=="3" goto :FUNC_TEL_CEIP
+if "!choice!"=="4" goto :FUNC_TEL_TIMELINE
+if "!choice!"=="5" goto :FUNC_TEL_INKING
+if "!choice!"=="6" goto :FUNC_TEL_TAILORED
+if "!choice!"=="7" goto :FUNC_TEL_FEEDBACK
+if "!choice!"=="8" goto :FUNC_TEL_CORTANA
+if "!choice!"=="9" goto :FUNC_TEL_APPID
+if "!choice!"=="10" goto :FUNC_TEL_LOCATION
 if /i "!choice!"=="R" goto :MENU
 goto :SUB_TELEMETRY
 
@@ -439,7 +445,7 @@ exit /b
 
 :MENU_FOOTER
 echo.
-echo           %BAR:~0,80%
+echo            %BAR:~0,80%
 :: Swapped to M0 (10 spaces) to align with Header and Selection prompt
 echo %M0% [%~1] %~2
 echo.
@@ -565,16 +571,7 @@ if !errorlevel! neq 0 (echo. & echo %M2%[ INFO ] Operation cancelled. Returning.
 echo.
 call :LOG "PROCESS" "MAINTENANCE" "Initiating Automated General Cleanup sequence (1-10)..."
 set "AUTO_CLEAN=1"
-call :FUNC_TEMP_CLEAN
-call :FUNC_PREFETCH
-call :FUNC_UPDATE
-call :FUNC_CRASHDUMPS
-call :FUNC_THUMBNAILS
-call :FUNC_INVALID_SHORTCUTS
-call :FUNC_EXPLORER_RUN
-call :FUNC_INSTALLER_LEFTOVERS
-call :FUNC_ORPHANED_PROGRAMDATA
-call :FUNC_RECYCLE
+for %%F in (TEMP_CLEAN PREFETCH UPDATE CRASHDUMPS THUMBNAILS INVALID_SHORTCUTS EXPLORER_RUN INSTALLER_LEFTOVERS ORPHANED_PROGRAMDATA RECYCLE) do call :FUNC_%%F
 set "AUTO_CLEAN=0"
 echo.
 echo %M2%[ STATUS ] Automated General Cleanup sequence complete.
@@ -585,10 +582,8 @@ echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_MAINT_GEN
 if "!AUTO_CLEAN!"=="0" (cls & echo.)
 call :LOG "PROCESS" "MAINTENANCE" "Initiating comprehensive Temp file cleanup..."
 call :TRACK_SPACE_START "%temp%|%WINDIR%\Temp"
-echo %M2%[ PROCESS ] Purging User Temp folder...
-call :PURGE_DIR "%temp%"
-echo %M2%[ PROCESS ] Purging Windows System Temp...
-call :PURGE_DIR "%WINDIR%\Temp"
+echo %M2%[ PROCESS ] Purging User and System Temp folders...
+for %%D in ("%temp%" "%WINDIR%\Temp") do call :PURGE_DIR "%%~D"
 call :TRACK_SPACE_END
 echo %M2%[ STATUS ] Comprehensive Temp cleanup complete (In-use files bypassed).
 call :LOG "SUCCESS" "MAINTENANCE" "Temp file cleanup cycle complete."
@@ -638,8 +633,7 @@ echo.
 call :LOG "PROCESS" "MAINTENANCE" "Purging Error Reports and Minidumps..."
 call :TRACK_SPACE_START "%ProgramData%\Microsoft\Windows\WER|%WINDIR%\Minidump"
 echo %M2%[ PROCESS ] Purging Windows Error Reporting (WER) and Minidumps...
-call :PURGE_DIR "%ProgramData%\Microsoft\Windows\WER"
-call :PURGE_DIR "%WINDIR%\Minidump"
+for %%D in ("%ProgramData%\Microsoft\Windows\WER" "%WINDIR%\Minidump") do call :PURGE_DIR "%%~D"
 call :TRACK_SPACE_END
 echo %M2%[ STATUS ] Crash dumps and error reports successfully cleared.
 call :LOG "SUCCESS" "MAINTENANCE" "Crash Dumps and WER cleared."
@@ -663,9 +657,7 @@ if "!AUTO_CLEAN!"=="0" (cls & echo.)
 call :LOG "PROCESS" "MAINTENANCE" "Clearing Invalid User Shortcuts..."
 call :TRACK_SPACE_START "%AppData%\Microsoft\Windows\Recent"
 echo %M2%[ PROCESS ] Sweeping recent item and destination shortcut caches...
-del /q /s /f /a "%AppData%\Microsoft\Windows\Recent\*.lnk" >nul 2>&1
-del /q /s /f /a "%AppData%\Microsoft\Windows\Recent\AutomaticDestinations\*" >nul 2>&1
-del /q /s /f /a "%AppData%\Microsoft\Windows\Recent\CustomDestinations\*" >nul 2>&1
+for %%D in ("*.lnk" "AutomaticDestinations\*" "CustomDestinations\*") do del /q /s /f /a "%AppData%\Microsoft\Windows\Recent\%%~D" >nul 2>&1
 call :TRACK_SPACE_END
 echo %M2%[ STATUS ] Invalid user shortcuts swept.
 call :LOG "SUCCESS" "MAINTENANCE" "Invalid user shortcuts successfully cleared."
@@ -676,8 +668,7 @@ echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_MAINT_GEN
 if "!AUTO_CLEAN!"=="0" (cls & echo.)
 call :LOG "PROCESS" "MAINTENANCE" "Clearing Explorer Run History..."
 echo %M2%[ PROCESS ] Wiping Windows Explorer RunMRU registry keys...
-reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU" /f >nul 2>&1
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU" /f >nul 2>&1
+reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU" /f >nul 2>&1 & reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU" /f >nul 2>&1
 echo %M2%[ STATUS ] Explorer Run History cleared.
 call :LOG "SUCCESS" "MAINTENANCE" "Explorer Run History successfully cleared."
 if "!AUTO_CLEAN!"=="1" exit /b
@@ -689,8 +680,7 @@ call :LOG "PROCESS" "MAINTENANCE" "Cleaning Installer Leftovers..."
 :: Uses GLOBAL tracking mode to avoid hanging the CPU while measuring %WINDIR%
 call :TRACK_SPACE_START
 echo %M2%[ PROCESS ] Purging orphaned installation logs in Windows directory...
-del /q /f "%WINDIR%\*.log" >nul 2>&1
-del /q /f "%WINDIR%\setuptxt.txt" >nul 2>&1
+for %%F in ("*.log" "setuptxt.txt") do del /q /f "%WINDIR%\%%~F" >nul 2>&1
 call :TRACK_SPACE_END
 echo %M2%[ STATUS ] Installer leftovers cleaned.
 call :LOG "SUCCESS" "MAINTENANCE" "Installer leftovers successfully purged."
@@ -702,9 +692,7 @@ if "!AUTO_CLEAN!"=="0" (cls & echo.)
 call :LOG "PROCESS" "MAINTENANCE" "Cleaning Orphaned ProgramData..."
 call :TRACK_SPACE_START "%ProgramData%\Spotify\Data|%ProgramData%\NVIDIA Corporation\NV_Cache|%ProgramData%\Discord\Cache"
 echo %M2%[ PROCESS ] Purging known vendor cache directories...
-for %%D in ("Spotify\Data" "NVIDIA Corporation\NV_Cache" "Discord\Cache") do (
-    if exist "%ProgramData%\%%~D" call :PURGE_DIR "%ProgramData%\%%~D"
-)
+for %%D in ("Spotify\Data" "NVIDIA Corporation\NV_Cache" "Discord\Cache") do if exist "%ProgramData%\%%~D" call :PURGE_DIR "%ProgramData%\%%~D"
 call :TRACK_SPACE_END
 echo %M2%[ STATUS ] Orphaned ProgramData cleaned.
 call :LOG "SUCCESS" "MAINTENANCE" "Orphaned ProgramData caches purged."
@@ -742,8 +730,7 @@ call :TRACK_SPACE_START
 echo %M2%[ PROCESS ] Terminating Windows Explorer...
 taskkill /f /im explorer.exe >nul 2>&1
 echo %M2%[ PROCESS ] Deleting Icon and Thumbnail Cache databases...
-del /f /s /q /a "%LocalAppData%\IconCache.db" >nul 2>&1
-del /f /s /q /a "%LocalAppData%\Microsoft\Windows\Explorer\thumbcache_*.db" >nul 2>&1
+for %%F in ("%LocalAppData%\IconCache.db" "%LocalAppData%\Microsoft\Windows\Explorer\thumbcache_*.db") do del /f /s /q /a "%%~F" >nul 2>&1
 echo %M2%[ PROCESS ] Restarting Windows Explorer...
 start explorer.exe
 call :TRACK_SPACE_END
@@ -811,9 +798,7 @@ call :TRACK_SPACE_START
 echo %M2%[ PROCESS ] Halting Discord processes...
 taskkill /f /im Discord.exe >nul 2>&1
 echo %M2%[ PROCESS ] Purging Discord caches...
-if exist "%AppData%\discord\Cache" call :PURGE_DIR "%AppData%\discord\Cache"
-if exist "%AppData%\discord\Code Cache" call :PURGE_DIR "%AppData%\discord\Code Cache"
-if exist "%AppData%\discord\GPUCache" call :PURGE_DIR "%AppData%\discord\GPUCache"
+for %%C in ("Cache" "Code Cache" "GPUCache") do if exist "%AppData%\discord\%%~C" call :PURGE_DIR "%AppData%\discord\%%~C"
 call :TRACK_SPACE_END
 echo %M2%[ STATUS ] Discord Cache successfully cleared.
 call :LOG "SUCCESS" "MAINTENANCE" "Discord caches purged."
@@ -828,15 +813,10 @@ echo.
 call :LOG "PROCESS" "MAINTENANCE" "Initiating MS Teams Cache Clean..."
 call :TRACK_SPACE_START
 echo %M2%[ PROCESS ] Halting MS Teams processes...
-taskkill /f /im Teams.exe >nul 2>&1
-taskkill /f /im ms-teams.exe >nul 2>&1
-taskkill /f /im msteams.exe >nul 2>&1
+for %%P in (Teams ms-teams msteams) do taskkill /f /im %%P.exe >nul 2>&1
 echo %M2%[ PROCESS ] Purging Classic and New Teams caches...
-if exist "%AppData%\Microsoft\Teams\Cache" call :PURGE_DIR "%AppData%\Microsoft\Teams\Cache"
-if exist "%AppData%\Microsoft\Teams\Code Cache" call :PURGE_DIR "%AppData%\Microsoft\Teams\Code Cache"
-if exist "%AppData%\Microsoft\Teams\GPUCache" call :PURGE_DIR "%AppData%\Microsoft\Teams\GPUCache"
-if exist "%LocalAppData%\Packages\MSTeams_8wekyb3d8bbwe\LocalCache\Microsoft\MSTeams\Cache" call :PURGE_DIR "%LocalAppData%\Packages\MSTeams_8wekyb3d8bbwe\LocalCache\Microsoft\MSTeams\Cache"
-if exist "%LocalAppData%\Packages\MSTeams_8wekyb3d8bbwe\LocalCache\Microsoft\MSTeams\EBWebView\GPUCache" call :PURGE_DIR "%LocalAppData%\Packages\MSTeams_8wekyb3d8bbwe\LocalCache\Microsoft\MSTeams\EBWebView\GPUCache"
+for %%C in ("Cache" "Code Cache" "GPUCache") do if exist "%AppData%\Microsoft\Teams\%%~C" call :PURGE_DIR "%AppData%\Microsoft\Teams\%%~C"
+for %%C in ("Cache" "EBWebView\GPUCache") do if exist "%LocalAppData%\Packages\MSTeams_8wekyb3d8bbwe\LocalCache\Microsoft\MSTeams\%%~C" call :PURGE_DIR "%LocalAppData%\Packages\MSTeams_8wekyb3d8bbwe\LocalCache\Microsoft\MSTeams\%%~C"
 call :TRACK_SPACE_END
 echo %M2%[ STATUS ] MS Teams Cache successfully cleared.
 call :LOG "SUCCESS" "MAINTENANCE" "MS Teams caches purged."
@@ -851,27 +831,14 @@ echo.
 call :LOG "PROCESS" "MAINTENANCE" "Initiating Xbox Cache Clean..."
 call :TRACK_SPACE_START
 echo %M2%[ PROCESS ] Halting Xbox background processes and services...
-taskkill /f /im XboxApp.exe >nul 2>&1
-taskkill /f /im XboxPcApp.exe >nul 2>&1
-taskkill /f /im GameBar.exe >nul 2>&1
-taskkill /f /im GameBarFTServer.exe >nul 2>&1
+for %%P in (XboxApp XboxPcApp GameBar GameBarFTServer) do taskkill /f /im %%P.exe >nul 2>&1
 for %%S in (XblAuthManager XblGameSave XboxNetApiSvc) do call :SVC_ENGINE "%%S" "STOP"
 
 echo %M2%[ PROCESS ] Purging Xbox App and Gameplay caches...
-for %%P in (
-    "Microsoft.XboxApp_8wekyb3d8bbwe"
-    "Microsoft.XboxGamingOverlay_8wekyb3d8bbwe"
-    "Microsoft.XboxIdentityProvider_8wekyb3d8bbwe"
-    "Microsoft.XboxSpeechToTextOverlay_8wekyb3d8bbwe"
-    "Microsoft.GamingApp_8wekyb3d8bbwe"
-) do (
-    if exist "%LocalAppData%\Packages\%%~P\LocalCache" call :PURGE_DIR "%LocalAppData%\Packages\%%~P\LocalCache"
-    if exist "%LocalAppData%\Packages\%%~P\AC\INetCache" call :PURGE_DIR "%LocalAppData%\Packages\%%~P\AC\INetCache"
-    if exist "%LocalAppData%\Packages\%%~P\AC\Temp" call :PURGE_DIR "%LocalAppData%\Packages\%%~P\AC\Temp"
-)
+for %%P in ("Microsoft.XboxApp_8wekyb3d8bbwe" "Microsoft.XboxGamingOverlay_8wekyb3d8bbwe" "Microsoft.XboxIdentityProvider_8wekyb3d8bbwe" "Microsoft.XboxSpeechToTextOverlay_8wekyb3d8bbwe" "Microsoft.GamingApp_8wekyb3d8bbwe") do for %%D in ("LocalCache" "AC\INetCache" "AC\Temp") do if exist "%LocalAppData%\Packages\%%~P\%%~D" call :PURGE_DIR "%LocalAppData%\Packages\%%~P\%%~D"
 
 call :TRACK_SPACE_END
-echo %M2%[ STATUS ] Xbox Live and App Cache successfully cleared.
+echo %M2%[ STATUS ] Xbox Gameplay and App Cache successfully cleared.
 call :LOG "SUCCESS" "MAINTENANCE" "Xbox caches purged."
 echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_MAINT_ADV
 
@@ -902,8 +869,7 @@ echo.
 call :LOG "PROCESS" "MAINTENANCE" "Initiating DirectX Shader Cache Purge..."
 call :TRACK_SPACE_START "%LocalAppData%\D3DSCache|%LocalAppData%\Microsoft\DirectX Shader Cache"
 echo %M2%[ PROCESS ] Purging DirectX and D3D Shader Caches...
-call :PURGE_DIR "%LocalAppData%\D3DSCache"
-call :PURGE_DIR "%LocalAppData%\Microsoft\DirectX Shader Cache"
+for %%D in ("%LocalAppData%\D3DSCache" "%LocalAppData%\Microsoft\DirectX Shader Cache") do call :PURGE_DIR "%%~D"
 call :TRACK_SPACE_END
 echo %M2%[ STATUS ] DirectX Shader Caches successfully cleared.
 call :LOG "SUCCESS" "MAINTENANCE" "DirectX Shader Caches purged."
@@ -999,26 +965,13 @@ call :LOG "SUCCESS" "MAINTENANCE" "Ghost device cleanup executed successfully."
 echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_MAINT_ADV
 
 :FUNC_WINSXS
-cls
-echo.
-echo %M0%-- WINDOWS COMPONENT STORE (WINSXS) CLEANUP ------------------------------------
-echo.
-echo %M1%[1] Standard Cleanup  - Removes superseded files (Safe / Keeps Rollback)
-echo %M1%[2] Deep Image Reset  - Full purge (Reclaims Max Space / Locks in Updates)
-echo %M1%[R] Cancel            - Return to sub-menu
-echo.
-:WINSXS_SUB_PROMPT
-set "ws_choice="
-set /p "ws_choice=%BS%          [Selection] :> "
-
-if "!ws_choice!"=="1" goto :W_STANDARD
-if "!ws_choice!"=="2" goto :W_DEEP
-if /i "!ws_choice!"=="R" (echo. & echo %M2%[ INFO ] Operation cancelled. Returning to sub-menu... & call :LOG "WARNING" "MAINTENANCE" "User cancelled WinSxS Component Store cleanup." & timeout /t 1 >nul & goto :SUB_MAINT_ADV)
-echo %M2%[ ERROR ] Invalid selection.
-goto :WINSXS_SUB_PROMPT
+call :PROMPT_TOGGLE "WINDOWS COMPONENT STORE (WINSXS)" "Standard Cleanup  - Removes superseded files (Safe / Keeps Rollback)" "Deep Image Reset  - Full purge (Reclaims Max Space / Locks Updates)" "RETURN TO DEEP CLEANUP MENU"
+if !errorlevel! equ 0 (echo. & echo %M2%[ INFO ] Operation cancelled. Returning... & call :LOG "WARNING" "MAINTENANCE" "User cancelled WinSxS Component Store cleanup." & timeout /t 1 >nul & goto :SUB_MAINT_ADV)
+if !errorlevel! equ 1 goto :W_STANDARD
+if !errorlevel! equ 2 goto :W_DEEP
 
 :W_STANDARD
-cls & echo.
+cls & call :PRINT_HEADER & echo.
 call :LOG "PROCESS" "MAINTENANCE" "Initiating Standard DISM Component Store Cleanup..."
 call :TRACK_SPACE_START
 echo %M2%[ PROCESS ] Initiating Standard Component Cleanup...
@@ -1026,10 +979,11 @@ dism /online /cleanup-image /StartComponentCleanup
 set "DISM_ERR=!errorlevel!" & if !DISM_ERR! equ 3010 set "DISM_ERR=0"
 echo. & if !DISM_ERR! equ 0 call :TRACK_SPACE_END
 call :EVAL_STATUS !DISM_ERR! "MAINTENANCE" "Standard Component Store Cleanup failed." "Standard Component Store Cleanup successfully dispatched."
-echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_MAINT_ADV
+echo. & echo %M2%[Press any key to return...] & pause >nul
+goto :SUB_MAINT_ADV
 
 :W_DEEP
-cls & echo.
+cls & call :PRINT_HEADER & echo.
 echo %M2%[ WARNING ] THIS WILL PERMANENTLY REMOVE ALL UPDATE ROLLBACK FILES.
 echo %M2%[ WARNING ] YOU WILL NOT BE ABLE TO UNINSTALL CURRENT WINDOWS UPDATES.
 call :ASK_CONFIRM "Proceed with Deep Reset?"
@@ -1040,7 +994,7 @@ echo %M2%[ PROCESS ] Phase 1: Initiating Component Cleanup...
 dism /online /cleanup-image /StartComponentCleanup
 set "DISM_ERR=!errorlevel!"
 
-:: Intercept Reboot Pending or Hard Errors instantly (Fixed Parenthesis Bug)
+:: Intercept Reboot Pending or Hard Errors instantly
 if !DISM_ERR! equ 3010 (echo. & echo %M2%[ WARNING ] Phase 1 Reboot pending. Aborting Phase 2. & call :LOG "WARNING" "MAINTENANCE" "Phase 1 Reboot Pending." & echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_MAINT_ADV)
 if !DISM_ERR! neq 0 (echo. & echo %M2%[ ERROR ] Phase 1 failed [Code: !DISM_ERR!]. Aborting Phase 2. & call :LOG "ERROR" "MAINTENANCE" "Phase 1 failed." & echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_MAINT_ADV)
 
@@ -1049,7 +1003,8 @@ dism /online /cleanup-image /StartComponentCleanup /ResetBase
 set "DISM_ERR=!errorlevel!"
 call :TRACK_SPACE_END & echo.
 if !DISM_ERR! equ 3010 (echo %M2%[ STATUS ] Optimised [Reboot Pending]. & call :LOG "SUCCESS" "MAINTENANCE" "Deep Reset [Reboot Pending].") else if !DISM_ERR! neq 0 (echo %M2%[ WARNING ] Phase 2 failed. & call :LOG "WARNING" "MAINTENANCE" "ResetBase failed.") else (echo %M2%[ STATUS ] Component Store fully optimised. & call :LOG "SUCCESS" "MAINTENANCE" "Deep WinSxS Base Reset completed.")
-echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_MAINT_ADV
+echo. & echo %M2%[Press any key to return...] & pause >nul
+goto :SUB_MAINT_ADV
 
 :FUNC_WSRESET
 cls
@@ -1213,6 +1168,9 @@ echo %M2%[ PROCESS ] Injecting schedule command...
 echo y| chkdsk %SystemDrive% /f >nul 2>&1
 set "CHK_ERR=!errorlevel!"
 
+:: Exit Code 3 is the native OS return code when scheduling a locked SystemDrive
+if !CHK_ERR! equ 3 set "CHK_ERR=0"
+
 if !CHK_ERR! equ 0 (
     echo %M2%[ STATUS ] Repair successfully scheduled for the next system restart.
     call :LOG "SUCCESS" "DIAGNOSTICS" "Offline CHKDSK repair scheduled successfully."
@@ -1369,8 +1327,7 @@ if !errorlevel! neq 0 (echo. & echo %M2%[ INFO ] Operation cancelled. Returning 
 echo.
 call :LOG "PROCESS" "NETWORK" "Executing netsh TCP/IP reset..."
 echo %M2%[ PROCESS ] Exporting network configuration...
-set "NET_DIR=%ProgramData%\Primus\Backups\NetConfig"
-if not exist "!NET_DIR!" mkdir "!NET_DIR!" >nul 2>&1
+set "NET_DIR=%ProgramData%\Primus\Backups\NetConfig" & if not exist "!NET_DIR!" mkdir "!NET_DIR!" >nul 2>&1
 if not exist "!NET_DIR!\Primus_NetConfig_!FILE_TIME!.txt" ipconfig /all > "!NET_DIR!\Primus_NetConfig_!FILE_TIME!.txt"
 echo %M2%[ PROCESS ] Resetting TCP/IP stack...
 netsh int ip reset >nul 2>&1
@@ -1394,8 +1351,7 @@ if !errorlevel! neq 0 (echo. & echo %M2%[ INFO ] Operation cancelled. Returning 
 echo.
 call :LOG "PROCESS" "NETWORK" "Executing netsh Winsock reset..."
 echo %M2%[ PROCESS ] Exporting network configuration...
-set "NET_DIR=%ProgramData%\Primus\Backups\NetConfig"
-if not exist "!NET_DIR!" mkdir "!NET_DIR!" >nul 2>&1
+set "NET_DIR=%ProgramData%\Primus\Backups\NetConfig" & if not exist "!NET_DIR!" mkdir "!NET_DIR!" >nul 2>&1
 if not exist "!NET_DIR!\Primus_NetConfig_!FILE_TIME!.txt" ipconfig /all > "!NET_DIR!\Primus_NetConfig_!FILE_TIME!.txt"
 echo %M2%[ PROCESS ] Resetting Winsock Catalogue...
 netsh winsock reset >nul 2>&1
@@ -1437,27 +1393,14 @@ echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_STORAGE
 :FUNC_COMPACT_OS
 call :PRINT_SUB_HEADER "COMPACT OS (SYSTEM COMPRESSION)"
 echo %M0%[ PROCESS ] Querying current CompactOS state...
-
-:: Silently determine current state by parsing compact.exe output
 set "COMP_STATE=Enabled"
 compact.exe /compactos:query 2>nul | find /i "not in the Compact state" >nul
 if !errorlevel! equ 0 set "COMP_STATE=Disabled"
 
-call :PRINT_SUB_HEADER "COMPACT OS (SYSTEM COMPRESSION)"
-echo %M0%[ INFO ] CompactOS is currently: !COMP_STATE!
-echo.
-echo %M1%[1] Enable System Compression (Reclaim Space)
-echo %M1%[2] Disable System Compression (Windows Default)
-call :MENU_FOOTER "R" "RETURN TO STORAGE MENU"
-set "comp_choice="
-set /p "comp_choice=%BS%%M0%[Selection] :> "
+call :PROMPT_TOGGLE "COMPACT OS (STATUS: !COMP_STATE!)" "Enable System Compression (Reclaim Space)" "Disable System Compression (Windows Default)" "RETURN TO STORAGE MENU"
+if !errorlevel! equ 0 goto :SUB_STORAGE
+if !errorlevel! equ 1 (set "C_ARG=always" & set "C_MSG=Compressing" & set "C_LOG=enabled") else (set "C_ARG=never" & set "C_MSG=Decompressing" & set "C_LOG=disabled")
 
-if "!comp_choice!"=="1" set "C_ARG=always" & set "C_MSG=Compressing" & set "C_LOG=enabled" & goto :COMPACT_EXEC
-if "!comp_choice!"=="2" set "C_ARG=never" & set "C_MSG=Decompressing" & set "C_LOG=disabled" & goto :COMPACT_EXEC
-if /i "!comp_choice!"=="R" goto :SUB_STORAGE
-goto :FUNC_COMPACT_OS
-
-:COMPACT_EXEC
 cls & call :PRINT_HEADER & echo.
 echo %M2%[ INFO ] This will modify OS binaries. It may take 5-15 minutes.
 call :ASK_CONFIRM "Proceed with operation?"
@@ -1503,8 +1446,6 @@ echo %M2%[Press any key to return...] & pause >nul
 goto :SUB_STORAGE
 
 :FUNC_RESERVED_STORAGE
-call :PRINT_SUB_HEADER "WINDOWS RESERVED STORAGE"
-
 :: OS Build Guard (Requires Windows 10 1903 / Build 18362+)
 set "RES_SUPPORTED=1"
 if "!OS_BUILD!"=="Unknown" set "RES_SUPPORTED=0"
@@ -1513,6 +1454,7 @@ if !errorlevel! neq 0 set "RES_SUPPORTED=0"
 if !RES_SUPPORTED! equ 1 if !OS_BUILD! lss 18362 set "RES_SUPPORTED=0"
 
 if !RES_SUPPORTED! equ 0 (
+    call :PRINT_SUB_HEADER "WINDOWS RESERVED STORAGE"
     echo %M0%[ WARNING ] Reserved Storage management is not supported on this OS.
     echo %M0%[ INFO ] Requires Windows 10 Version 1903 ^(Build 18362^) or later.
     echo %M0%[ INFO ] Your Current Build: !OS_BUILD!
@@ -1522,18 +1464,10 @@ if !RES_SUPPORTED! equ 0 (
     goto :SUB_STORAGE
 )
 
-echo %M1%[1] Disable Reserved Storage (Reclaims ~7GB Space)
-echo %M1%[2] Enable Reserved Storage  (Windows Default)
-call :MENU_FOOTER "R" "RETURN TO STORAGE MENU"
-set "res_choice="
-set /p "res_choice=%BS%%M0%[Selection] :> "
+call :PROMPT_TOGGLE "WINDOWS RESERVED STORAGE" "Disable Reserved Storage (Reclaims ~7GB Space)" "Enable Reserved Storage  (Windows Default)" "RETURN TO STORAGE MENU"
+if !errorlevel! equ 0 goto :SUB_STORAGE
+if !errorlevel! equ 1 (set "R_STATE=Disabled" & set "R_LOG=disabled") else (set "R_STATE=Enabled" & set "R_LOG=restored")
 
-if "!res_choice!"=="1" set "R_STATE=Disabled" & set "R_LOG=disabled" & goto :RES_EXEC
-if "!res_choice!"=="2" set "R_STATE=Enabled" & set "R_LOG=restored" & goto :RES_EXEC
-if /i "!res_choice!"=="R" goto :SUB_STORAGE
-goto :FUNC_RESERVED_STORAGE
-
-:RES_EXEC
 cls & call :PRINT_HEADER & echo.
 call :LOG "PROCESS" "OPTIMISATION" "Setting Reserved Storage to !R_STATE!..."
 call :TRACK_SPACE_START
@@ -1869,189 +1803,180 @@ echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_SECURITY
 
 :: --- PRIVACY & TELEMETRY MODULES ---
 :FUNC_TEL_WINDOWS
-call :PRINT_SUB_HEADER "WINDOWS SYSTEM TELEMETRY"
-echo %M1%[1] Disable Telemetry (Privacy Mode)
-echo %M1%[2] Enable Telemetry  (Windows Default)
-call :MENU_FOOTER "R" "RETURN TO PRIVACY MENU"
-set "tel_choice="
-set /p "tel_choice=%BS%%M0%[Selection] :> "
-
-if "!tel_choice!"=="1" goto :TEL_WIN_DISABLE
-if "!tel_choice!"=="2" goto :TEL_WIN_ENABLE
-if /i "!tel_choice!"=="R" goto :SUB_TELEMETRY
-goto :FUNC_TEL_WINDOWS
-
-:TEL_WIN_DISABLE
+call :PROMPT_TOGGLE "WINDOWS SYSTEM TELEMETRY" "Disable Telemetry (Privacy Mode)" "Enable Telemetry  (Windows Default)" "RETURN TO PRIVACY MENU"
+if !errorlevel! equ 0 goto :SUB_TELEMETRY
+set "T_STATE=!errorlevel!"
 cls & call :PRINT_HEADER & echo.
-echo %M2%[ PROCESS ] Stopping DiagTrack and dmwappush services...
-for %%S in (DiagTrack dmwappushservice) do (call :SVC_ENGINE "%%S" "STOP" & call :SVC_ENGINE "%%S" "DISABLE")
-set "S_MSG=disabled"
-call :REG_ENGINE "Windows System Telemetry" "ADD" "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" "AllowTelemetry" "REG_DWORD" "0" "0x0"
+if "!T_STATE!"=="1" (
+    echo %M2%[ PROCESS ] Stopping DiagTrack and dmwappush services...
+    for %%S in (DiagTrack dmwappushservice) do (call :SVC_ENGINE "%%S" "STOP" & call :SVC_ENGINE "%%S" "DISABLE")
+    set "S_MSG=disabled"
+    call :REG_ENGINE "Windows System Telemetry" "ADD" "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" "AllowTelemetry" "REG_DWORD" "0" "0x0"
+) else (
+    echo %M2%[ PROCESS ] Restoring DiagTrack and dmwappush services...
+    call :SVC_ENGINE "DiagTrack" "ENABLE" & call :SVC_ENGINE "DiagTrack" "START"
+    call :SVC_ENGINE "dmwappushservice" "DELAYED" & call :SVC_ENGINE "dmwappushservice" "START"
+    set "S_MSG=restored"
+    call :REG_ENGINE "Windows System Telemetry" "DEL" "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" "AllowTelemetry"
+)
 goto :SUB_TELEMETRY
 
-:TEL_WIN_ENABLE
+:FUNC_TEL_WER
+call :PROMPT_TOGGLE "ERROR REPORTING (WER)" "Disable Error Reporting Uploads (Privacy Mode)" "Enable Error Reporting Uploads  (Windows Default)" "RETURN TO PRIVACY MENU"
+if !errorlevel! equ 0 goto :SUB_TELEMETRY
+set "T_STATE=!errorlevel!"
 cls & call :PRINT_HEADER & echo.
-echo %M2%[ PROCESS ] Restoring DiagTrack and dmwappush services...
-call :SVC_ENGINE "DiagTrack" "ENABLE" & call :SVC_ENGINE "DiagTrack" "START"
-call :SVC_ENGINE "dmwappushservice" "DELAYED" & call :SVC_ENGINE "dmwappushservice" "START"
-set "S_MSG=restored"
-call :REG_ENGINE "Windows System Telemetry" "DEL" "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" "AllowTelemetry"
+if "!T_STATE!"=="1" (
+    set "S_MSG=disabled"
+    call :REG_ENGINE "Windows Error Reporting" "ADD" "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting" "Disabled" "REG_DWORD" "1" "0x1"
+) else (
+    set "S_MSG=restored"
+    call :REG_ENGINE "Windows Error Reporting" "DEL" "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting" "Disabled"
+)
+goto :SUB_TELEMETRY
+
+:FUNC_TEL_CEIP
+call :PROMPT_TOGGLE "CEIP SCHEDULED TASKS" "Disable CEIP Data Collection (Privacy Mode)" "Enable CEIP Data Collection  (Windows Default)" "RETURN TO PRIVACY MENU"
+if !errorlevel! equ 0 goto :SUB_TELEMETRY
+set "T_STATE=!errorlevel!"
+cls & call :PRINT_HEADER & echo.
+if "!T_STATE!"=="1" (
+    echo %M2%[ PROCESS ] Disabling CEIP Tasks...
+    for %%T in ("\Microsoft\Windows\Customer Experience Improvement Program\Consolidator" "\Microsoft\Windows\Customer Experience Improvement Program\BthSQM" "\Microsoft\Windows\Customer Experience Improvement Program\KernelCeipTask" "\Microsoft\Windows\Customer Experience Improvement Program\UsbCeip" "\Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser" "\Microsoft\Windows\Application Experience\ProgramDataUpdater" "\Microsoft\Windows\Application Experience\StartupAppTask") do schtasks /Change /TN %%T /Disable >nul 2>&1
+    set "S_MSG=disabled"
+    call :REG_ENGINE "CEIP Tasks" "ADD" "HKLM\SOFTWARE\Policies\Microsoft\Windows\AppCompat" "AITEnable" "REG_DWORD" "0" "0x0"
+) else (
+    echo %M2%[ PROCESS ] Enabling CEIP Tasks...
+    for %%T in ("\Microsoft\Windows\Customer Experience Improvement Program\Consolidator" "\Microsoft\Windows\Customer Experience Improvement Program\BthSQM" "\Microsoft\Windows\Customer Experience Improvement Program\KernelCeipTask" "\Microsoft\Windows\Customer Experience Improvement Program\UsbCeip" "\Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser" "\Microsoft\Windows\Application Experience\ProgramDataUpdater" "\Microsoft\Windows\Application Experience\StartupAppTask") do schtasks /Change /TN %%T /Enable >nul 2>&1
+    set "S_MSG=restored"
+    call :REG_ENGINE "CEIP Tasks" "DEL" "HKLM\SOFTWARE\Policies\Microsoft\Windows\AppCompat" "AITEnable"
+)
 goto :SUB_TELEMETRY
 
 :FUNC_TEL_TIMELINE
-call :PRINT_SUB_HEADER "ACTIVITY HISTORY & TIMELINE"
-echo %M1%[1] Disable Activity History (Privacy Mode)
-echo %M1%[2] Enable Activity History  (Windows Default)
-call :MENU_FOOTER "R" "RETURN TO PRIVACY MENU"
-set "tel_choice="
-set /p "tel_choice=%BS%%M0%[Selection] :> "
-
-if "!tel_choice!"=="1" goto :TEL_TIME_DISABLE
-if "!tel_choice!"=="2" goto :TEL_TIME_ENABLE
-if /i "!tel_choice!"=="R" goto :SUB_TELEMETRY
-goto :FUNC_TEL_TIMELINE
-
-:TEL_TIME_DISABLE
+call :PROMPT_TOGGLE "ACTIVITY HISTORY & TIMELINE" "Disable Activity History (Privacy Mode)" "Enable Activity History  (Windows Default)" "RETURN TO PRIVACY MENU"
+if !errorlevel! equ 0 goto :SUB_TELEMETRY
+set "T_STATE=!errorlevel!"
 cls & call :PRINT_HEADER & echo.
-set "S_MSG=disabled"
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v "UploadUserActivities" /t REG_DWORD /d 0 /f >nul 2>&1
-call :REG_ENGINE "Activity History" "ADD" "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" "PublishUserActivities" "REG_DWORD" "0" "0x0"
+if "!T_STATE!"=="1" (
+    set "S_MSG=disabled"
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v "UploadUserActivities" /t REG_DWORD /d 0 /f >nul 2>&1
+    call :REG_ENGINE "Activity History" "ADD" "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" "PublishUserActivities" "REG_DWORD" "0" "0x0"
+) else (
+    reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v "UploadUserActivities" /f >nul 2>&1
+    set "S_MSG=restored"
+    call :REG_ENGINE "Activity History" "DEL" "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" "PublishUserActivities"
+)
 goto :SUB_TELEMETRY
 
-:TEL_TIME_ENABLE
+:FUNC_TEL_INKING
+call :PROMPT_TOGGLE "INKING & TYPING PERSONALISATION" "Disable Inking and Typing Personalisation (Privacy Mode)" "Enable Inking and Typing Personalisation  (Windows Default)" "RETURN TO PRIVACY MENU"
+if !errorlevel! equ 0 goto :SUB_TELEMETRY
+set "T_STATE=!errorlevel!"
 cls & call :PRINT_HEADER & echo.
-reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v "UploadUserActivities" /f >nul 2>&1
-set "S_MSG=restored"
-call :REG_ENGINE "Activity History" "DEL" "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" "PublishUserActivities"
+if "!T_STATE!"=="1" (
+    reg add "HKCU\Software\Microsoft\InputPersonalization" /v "RestrictImplicitInkCollection" /t REG_DWORD /d 1 /f >nul 2>&1
+    reg add "HKCU\Software\Microsoft\InputPersonalization" /v "RestrictImplicitTextCollection" /t REG_DWORD /d 1 /f >nul 2>&1
+    set "S_MSG=disabled"
+    call :REG_ENGINE "Inking and Typing Personalisation" "ADD" "HKLM\SOFTWARE\Policies\Microsoft\InputPersonalization" "AllowInputPersonalization" "REG_DWORD" "0" "0x0"
+) else (
+    reg delete "HKCU\Software\Microsoft\InputPersonalization" /v "RestrictImplicitInkCollection" /f >nul 2>&1
+    reg delete "HKCU\Software\Microsoft\InputPersonalization" /v "RestrictImplicitTextCollection" /f >nul 2>&1
+    set "S_MSG=restored"
+    call :REG_ENGINE "Inking and Typing Personalisation" "DEL" "HKLM\SOFTWARE\Policies\Microsoft\InputPersonalization" "AllowInputPersonalization"
+)
 goto :SUB_TELEMETRY
 
-
-:FUNC_TEL_WER
-call :PRINT_SUB_HEADER "ERROR REPORTING (WER)"
-echo %M1%[1] Disable Error Reporting Uploads (Privacy Mode)
-echo %M1%[2] Enable Error Reporting Uploads  (Windows Default)
-call :MENU_FOOTER "R" "RETURN TO PRIVACY MENU"
-set "tel_choice="
-set /p "tel_choice=%BS%%M0%[Selection] :> "
-
-if "!tel_choice!"=="1" goto :TEL_WER_DISABLE
-if "!tel_choice!"=="2" goto :TEL_WER_ENABLE
-if /i "!tel_choice!"=="R" goto :SUB_TELEMETRY
-goto :FUNC_TEL_WER
-
-:TEL_WER_DISABLE
+:FUNC_TEL_TAILORED
+call :PROMPT_TOGGLE "TAILORED EXPERIENCES" "Disable Tailored Experiences (Privacy Mode)" "Enable Tailored Experiences  (Windows Default)" "RETURN TO PRIVACY MENU"
+if !errorlevel! equ 0 goto :SUB_TELEMETRY
+set "T_STATE=!errorlevel!"
 cls & call :PRINT_HEADER & echo.
-set "S_MSG=disabled"
-call :REG_ENGINE "Windows Error Reporting" "ADD" "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting" "Disabled" "REG_DWORD" "1" "0x1"
+if "!T_STATE!"=="1" (
+    reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Privacy" /v "TailoredExperiencesWithDiagnosticDataEnabled" /t REG_DWORD /d 0 /f >nul 2>&1
+    set "S_MSG=disabled"
+    call :REG_ENGINE "Tailored Experiences" "ADD" "HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent" "DisableTailoredExperiencesWithWindowsData" "REG_DWORD" "1" "0x1"
+) else (
+    reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Privacy" /v "TailoredExperiencesWithDiagnosticDataEnabled" /f >nul 2>&1
+    set "S_MSG=restored"
+    call :REG_ENGINE "Tailored Experiences" "DEL" "HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent" "DisableTailoredExperiencesWithWindowsData"
+)
 goto :SUB_TELEMETRY
 
-:TEL_WER_ENABLE
+:FUNC_TEL_FEEDBACK
+call :PROMPT_TOGGLE "FEEDBACK FREQUENCY & PROMPTS" "Disable Feedback Requests (Privacy Mode)" "Enable Feedback Requests  (Windows Default)" "RETURN TO PRIVACY MENU"
+if !errorlevel! equ 0 goto :SUB_TELEMETRY
+set "T_STATE=!errorlevel!"
 cls & call :PRINT_HEADER & echo.
-set "S_MSG=restored"
-call :REG_ENGINE "Windows Error Reporting" "DEL" "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting" "Disabled"
+if "!T_STATE!"=="1" (
+    reg add "HKCU\Software\Microsoft\Siuf\Rules" /v "NumberOfSIUFInPeriod" /t REG_DWORD /d 0 /f >nul 2>&1
+    set "S_MSG=disabled"
+    call :REG_ENGINE "Feedback Frequency" "ADD" "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" "DoNotShowFeedbackNotifications" "REG_DWORD" "1" "0x1"
+) else (
+    reg delete "HKCU\Software\Microsoft\Siuf\Rules" /v "NumberOfSIUFInPeriod" /f >nul 2>&1
+    set "S_MSG=restored"
+    call :REG_ENGINE "Feedback Frequency" "DEL" "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" "DoNotShowFeedbackNotifications"
+)
 goto :SUB_TELEMETRY
-
-
-:FUNC_TEL_CEIP
-call :PRINT_SUB_HEADER "CEIP SCHEDULED TASKS"
-echo %M1%[1] Disable CEIP Data Collection (Privacy Mode)
-echo %M1%[2] Enable CEIP Data Collection  (Windows Default)
-call :MENU_FOOTER "R" "RETURN TO PRIVACY MENU"
-set "tel_choice="
-set /p "tel_choice=%BS%%M0%[Selection] :> "
-
-if "!tel_choice!"=="1" goto :TEL_CEIP_DISABLE
-if "!tel_choice!"=="2" goto :TEL_CEIP_ENABLE
-if /i "!tel_choice!"=="R" goto :SUB_TELEMETRY
-goto :FUNC_TEL_CEIP
-
-:TEL_CEIP_DISABLE
-cls & call :PRINT_HEADER & echo.
-echo %M2%[ PROCESS ] Disabling CEIP Tasks...
-for %%T in ("\Microsoft\Windows\Customer Experience Improvement Program\Consolidator" "\Microsoft\Windows\Customer Experience Improvement Program\BthSQM" "\Microsoft\Windows\Customer Experience Improvement Program\KernelCeipTask" "\Microsoft\Windows\Customer Experience Improvement Program\UsbCeip" "\Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser" "\Microsoft\Windows\Application Experience\ProgramDataUpdater" "\Microsoft\Windows\Application Experience\StartupAppTask") do schtasks /Change /TN %%T /Disable >nul 2>&1
-set "S_MSG=disabled"
-call :REG_ENGINE "CEIP Tasks" "ADD" "HKLM\SOFTWARE\Policies\Microsoft\Windows\AppCompat" "AITEnable" "REG_DWORD" "0" "0x0"
-goto :SUB_TELEMETRY
-
-:TEL_CEIP_ENABLE
-cls & call :PRINT_HEADER & echo.
-echo %M2%[ PROCESS ] Enabling CEIP Tasks...
-for %%T in ("\Microsoft\Windows\Customer Experience Improvement Program\Consolidator" "\Microsoft\Windows\Customer Experience Improvement Program\BthSQM" "\Microsoft\Windows\Customer Experience Improvement Program\KernelCeipTask" "\Microsoft\Windows\Customer Experience Improvement Program\UsbCeip" "\Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser" "\Microsoft\Windows\Application Experience\ProgramDataUpdater" "\Microsoft\Windows\Application Experience\StartupAppTask") do schtasks /Change /TN %%T /Enable >nul 2>&1
-set "S_MSG=restored"
-call :REG_ENGINE "CEIP Tasks" "DEL" "HKLM\SOFTWARE\Policies\Microsoft\Windows\AppCompat" "AITEnable"
-goto :SUB_TELEMETRY
-
 
 :FUNC_TEL_CORTANA
-call :PRINT_SUB_HEADER "CORTANA & WEB SEARCH"
-echo %M1%[1] Disable Cortana ^& Web Search (Privacy Mode)
-echo %M1%[2] Enable Cortana ^& Web Search  (Windows Default)
-call :MENU_FOOTER "R" "RETURN TO PRIVACY MENU"
-set "tel_choice="
-set /p "tel_choice=%BS%%M0%[Selection] :> "
-
-if "!tel_choice!"=="1" goto :TEL_CORTANA_DISABLE
-if "!tel_choice!"=="2" goto :TEL_CORTANA_ENABLE
-if /i "!tel_choice!"=="R" goto :SUB_TELEMETRY
-goto :FUNC_TEL_CORTANA
-
-:TEL_CORTANA_DISABLE
+call :PROMPT_TOGGLE "CORTANA & WEB SEARCH" "Disable Cortana and Web Search (Privacy Mode)" "Enable Cortana and Web Search  (Windows Default)" "RETURN TO PRIVACY MENU"
+if !errorlevel! equ 0 goto :SUB_TELEMETRY
+set "T_STATE=!errorlevel!"
 cls & call :PRINT_HEADER & echo.
-echo %M2%[ PROCESS ] Disabling Cortana, Bing Search ^& Taskbar Suggestions...
-:: Kill Bing Search in Start Menu (Modern Windows 10/11)
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v "BingSearchEnabled" /t REG_DWORD /d 0 /f >nul 2>&1
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v "CortanaConsent" /t REG_DWORD /d 0 /f >nul 2>&1
-:: Kill Search Box Suggestions (The "River Island" fix)
-reg add "HKCU\Software\Policies\Microsoft\Windows\Explorer" /v "DisableSearchBoxSuggestions" /t REG_DWORD /d 1 /f >nul 2>&1
-:: Classic Policy Keys (Backup)
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v "DisableWebSearch" /t REG_DWORD /d 1 /f >nul 2>&1
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v "ConnectedSearchUseWeb" /t REG_DWORD /d 0 /f >nul 2>&1
-set "S_MSG=disabled"
-echo %M2%[ INFO ] Windows Explorer will restart to apply changes.
-call :REG_ENGINE "Cortana & Web Search" "ADD" "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" "AllowCortana" "REG_DWORD" "0" "0x0"
-taskkill /f /im explorer.exe >nul 2>&1 & start explorer.exe
-goto :SUB_TELEMETRY
-
-:TEL_CORTANA_ENABLE
-cls & call :PRINT_HEADER & echo.
-echo %M2%[ PROCESS ] Restoring Cortana ^& Web Search...
-:: Restore Bing and Suggestions
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v "BingSearchEnabled" /t REG_DWORD /d 1 /f >nul 2>&1
-reg delete "HKCU\Software\Policies\Microsoft\Windows\Explorer" /v "DisableSearchBoxSuggestions" /f >nul 2>&1
-:: Restore Classic Keys
-reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v "DisableWebSearch" /f >nul 2>&1
-reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v "ConnectedSearchUseWeb" /f >nul 2>&1
-set "S_MSG=restored"
-echo %M2%[ INFO ] Windows Explorer will restart to apply changes.
-call :REG_ENGINE "Cortana & Web Search" "DEL" "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" "AllowCortana"
+if "!T_STATE!"=="1" (
+    echo %M2%[ PROCESS ] Disabling Cortana, Bing Search ^& Taskbar Suggestions...
+    reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v "BingSearchEnabled" /t REG_DWORD /d 0 /f >nul 2>&1
+    reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v "CortanaConsent" /t REG_DWORD /d 0 /f >nul 2>&1
+    reg add "HKCU\Software\Policies\Microsoft\Windows\Explorer" /v "DisableSearchBoxSuggestions" /t REG_DWORD /d 1 /f >nul 2>&1
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v "DisableWebSearch" /t REG_DWORD /d 1 /f >nul 2>&1
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v "ConnectedSearchUseWeb" /t REG_DWORD /d 0 /f >nul 2>&1
+    set "S_MSG=disabled"
+    echo %M2%[ INFO ] Windows Explorer will restart to apply changes.
+    call :REG_ENGINE "Cortana & Web Search" "ADD" "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" "AllowCortana" "REG_DWORD" "0" "0x0"
+) else (
+    echo %M2%[ PROCESS ] Restoring Cortana ^& Web Search...
+    reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v "BingSearchEnabled" /t REG_DWORD /d 1 /f >nul 2>&1
+    reg delete "HKCU\Software\Policies\Microsoft\Windows\Explorer" /v "DisableSearchBoxSuggestions" /f >nul 2>&1
+    reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v "DisableWebSearch" /f >nul 2>&1
+    reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v "ConnectedSearchUseWeb" /f >nul 2>&1
+    set "S_MSG=restored"
+    echo %M2%[ INFO ] Windows Explorer will restart to apply changes.
+    call :REG_ENGINE "Cortana & Web Search" "DEL" "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" "AllowCortana"
+)
 taskkill /f /im explorer.exe >nul 2>&1 & start explorer.exe
 goto :SUB_TELEMETRY
 
 :FUNC_TEL_APPID
-call :PRINT_SUB_HEADER "APP ADVERTISING ID"
-echo %M1%[1] Disable App Advertising ID (Privacy Mode)
-echo %M1%[2] Enable App Advertising ID  (Windows Default)
-call :MENU_FOOTER "R" "RETURN TO PRIVACY MENU"
-set "tel_choice="
-set /p "tel_choice=%BS%%M0%[Selection] :> "
-
-if "!tel_choice!"=="1" goto :TEL_APPID_DISABLE
-if "!tel_choice!"=="2" goto :TEL_APPID_ENABLE
-if /i "!tel_choice!"=="R" goto :SUB_TELEMETRY
-goto :FUNC_TEL_APPID
-
-:TEL_APPID_DISABLE
+call :PROMPT_TOGGLE "APP ADVERTISING ID" "Disable App Advertising ID (Privacy Mode)" "Enable App Advertising ID  (Windows Default)" "RETURN TO PRIVACY MENU"
+if !errorlevel! equ 0 goto :SUB_TELEMETRY
+set "T_STATE=!errorlevel!"
 cls & call :PRINT_HEADER & echo.
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo" /v "Enabled" /t REG_DWORD /d 0 /f >nul 2>&1
-set "S_MSG=disabled"
-call :REG_ENGINE "App Advertising ID" "ADD" "HKLM\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo" "DisabledByGroupPolicy" "REG_DWORD" "1" "0x1"
+if "!T_STATE!"=="1" (
+    reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo" /v "Enabled" /t REG_DWORD /d 0 /f >nul 2>&1
+    set "S_MSG=disabled"
+    call :REG_ENGINE "App Advertising ID" "ADD" "HKLM\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo" "DisabledByGroupPolicy" "REG_DWORD" "1" "0x1"
+) else (
+    reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo" /v "Enabled" /t REG_DWORD /d 1 /f >nul 2>&1
+    set "S_MSG=restored"
+    call :REG_ENGINE "App Advertising ID" "DEL" "HKLM\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo" "DisabledByGroupPolicy"
+)
 goto :SUB_TELEMETRY
 
-:TEL_APPID_ENABLE
+:FUNC_TEL_LOCATION
+call :PROMPT_TOGGLE "LOCATION TRACKING SERVICES" "Disable Location Services (Privacy Mode)" "Enable Location Services  (Windows Default)" "RETURN TO PRIVACY MENU"
+if !errorlevel! equ 0 goto :SUB_TELEMETRY
+set "T_STATE=!errorlevel!"
 cls & call :PRINT_HEADER & echo.
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo" /v "Enabled" /t REG_DWORD /d 1 /f >nul 2>&1
-set "S_MSG=restored"
-call :REG_ENGINE "App Advertising ID" "DEL" "HKLM\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo" "DisabledByGroupPolicy"
+if "!T_STATE!"=="1" (
+    reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
+    set "S_MSG=disabled"
+    call :REG_ENGINE "Location Tracking Services" "ADD" "HKLM\SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors" "DisableLocation" "REG_DWORD" "1" "0x1"
+) else (
+    reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location" /v "Value" /t REG_SZ /d "Allow" /f >nul 2>&1
+    set "S_MSG=restored"
+    call :REG_ENGINE "Location Tracking Services" "DEL" "HKLM\SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors" "DisableLocation"
+)
 goto :SUB_TELEMETRY
 
 :: ---------------------------------------------------------------------------
@@ -2080,7 +2005,7 @@ powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command ^
     "Write-Host '             BIOS VER:  ' -NoNewline; Write-Host $bios -ForegroundColor Cyan;"
 
 echo.
-echo           ================================================================================
+echo            ================================================================================
 echo.
 call :LOG "SUCCESS" "SYSTEM" "Hardware specifications successfully displayed."
 echo            [Press any key to return to Main Menu...]
@@ -2114,8 +2039,8 @@ echo.
 echo             [ SUPPORT ]
 echo              GitHub: https://github.com/R4in84/Primus
 echo.
-echo           ================================================================================
-echo            [Press any key to view Tool Descriptions...]
+echo            ================================================================================
+echo             [Press any key to view Tool Descriptions...]
 pause >nul
 
 cls
@@ -2139,8 +2064,8 @@ echo             [ NETWORK OPTIMISATION ]
 echo              Flushes DNS/ARP routing tables and performs deep resets of the 
 echo              TCP/IP stack and Winsock catalogue to resolve offline bugs.
 echo.
-echo           ================================================================================
-echo            [Press any key to view Next Page...]
+echo            ================================================================================
+echo             [Press any key to view Next Page...]
 pause >nul
 
 cls
@@ -2157,12 +2082,13 @@ echo              Downloads Microsoft Safety Scanner (x86/x64/ARM64 auto-detect)
 echo              resets Firewall profiles, and utilizes Safe Mode for Defender cleans.
 echo.
 echo             [ PRIVACY ^& TELEMETRY ]
-echo              Disables OS data collection, Cortana web integration, CEIP tasks,
-echo              and Activity History via secure, native registry injections.
+echo              Controls OS data collection, WER error reporting, CEIP tasks, Activity
+echo              History, Inking/Typing, Tailored Experiences, Feedback Prompts, Cortana
+echo              web search, App Advertising IDs, and global Location Services.
 echo.
 echo           ================================================================================
 call :LOG "INFO" "SYSTEM" "User accessed Help & Information module."
-echo            [Press any key to return to Main Menu...]
+echo              [Press any key to return to Main Menu...]
 pause >nul
 goto :MENU
 
@@ -2320,6 +2246,19 @@ if "!TRACK_MODE!"=="GLOBAL" (
 echo %M2%[ STATUS ] Reclaimed Disk Space: !SPACE_SAVED!
 call :LOG "INFO" "MAINTENANCE" "Operation reclaimed !SPACE_SAVED! of disk space."
 exit /b
+
+:PROMPT_TOGGLE
+:: Usage: call :PROMPT_TOGGLE "TITLE" "Option 1 Text" "Option 2 Text" "Return Footer Text"
+call :PRINT_SUB_HEADER "%~1"
+echo %M1%[1] %~2
+echo %M1%[2] %~3
+call :MENU_FOOTER "R" "%~4"
+set "TOGGLE_CHOICE="
+set /p "TOGGLE_CHOICE=%BS%%M0%[Selection] :> "
+if "!TOGGLE_CHOICE!"=="1" exit /b 1
+if "!TOGGLE_CHOICE!"=="2" exit /b 2
+if /i "!TOGGLE_CHOICE!"=="R" exit /b 0
+goto :PROMPT_TOGGLE
 
 :RUN
 :: Usage: call :RUN "Category" "Process Msg" "Success Msg" "Error Msg" "Command"
