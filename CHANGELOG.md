@@ -2,6 +2,28 @@
 
 All notable changes to Primus will be documented in this file.
 
+## [1.3.2] - 2026-08-28
+
+### ✨ New Features
+
+**Privacy & Telemetry Suite Expansion**
+- ✅ Added four brand-new telemetry toggles: Feedback Frequency & Prompts, Inking & Typing Personalisation, Tailored Experiences, and Location Tracking Services.
+- ✅ Reorganized the Privacy menu into a logical 10-option dual-column layout, categorised smoothly by Core OS Telemetry, User Behavior, and System Integration.
+
+### 🐛 Bug Fixes
+
+**Edge Cases & Logic Traps**
+- 🐛 **CHKDSK False Negatives:** Normalized Windows' native Exit Code `3` as a success state to accurately report offline scan scheduling when targeting a locked, active OS volume (`%SystemDrive%`).
+- 🐛 **WinSxS Parsing Error:** Resolved a nested-parentheses string parsing bug within the WinSxS Component Store Deep Image Reset module to prevent unhandled script crashes.
+
+### 🔧 Updates & Refinements
+
+**Framework & Interface Standardization**
+- 🔧 Standardized interactive UI toggle menus across Privacy & Telemetry modules using the unified 4-parameter `:PROMPT_TOGGLE` global helper engine.
+- 🔧 Updated the built-in Help & Information module (Page 3) to accurately document the expanded privacy capabilities while ensuring pixel-perfect column indentation.
+
+---
+
 ## [1.3.1] - 2026-08-04
 
 ### ✨ New Features
