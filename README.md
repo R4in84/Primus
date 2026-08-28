@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D4?logo=windows)](https://www.microsoft.com/windows)
-[![Version](https://img.shields.io/badge/Version-1.3.1-success)](https://github.com/R4in84/Primus/releases)
+[![Version](https://img.shields.io/badge/Version-1.3.2-success)](https://github.com/R4in84/Primus/releases)
 
 > Primus is a collection of scripts I use to maintain, clean, and optimize Windows 10/11. It consolidates various system tasks into a single interface with built-in safety checks and logging.
 
@@ -34,13 +34,13 @@
 - Safely purge old and superseded driver packages from the Driver Store
 - Unregister disconnected ghost/hidden devices (preserves virtual hardware adapters)
 - Reset Windows Store cache
-- WinSxS Component Store cleanup (Standard + Deep modes)
+- WinSxS Component Store cleanup (Standard + Deep modes with reboot-pending safeguards)
 - Clear system event logs
 
 ### **System Diagnostics & Repair** 🔧
 - Query volume dirty bits
 - Read-only integrity scans
-- Schedule and cancel offline repairs (with registry lock validation)
+- Schedule and cancel offline repairs (with native lock return-code normalization)
 - System File Checker (SFC) with basic log parsing
 - DISM health checks and image scans
 - DISM image repair with reboot-pending detection
@@ -62,15 +62,16 @@
 ### **Security & Privacy** 🛡️
 - Microsoft Safety Scanner (MSERT) integration (x86/x64/ARM64 auto-detect)
 - Reset Windows Firewall to default settings (includes rule backup)
-- Windows Defender history and scan log cleanup
+- Windows Defender history and scan log cleanup (with Safe Mode loop prevention)
 - Force Defender signature updates
-- Toggle System Telemetry and Activity History
-- Disable Cortana web search and App Advertising ID
-- Manage CEIP and Error Reporting tasks
+- **Comprehensive 10-Module Privacy Suite:**
+  - Control OS Telemetry, Error Reporting (WER), and CEIP Tasks
+  - Manage Activity History, Inking/Typing Personalisation, and Tailored Experiences
+  - Toggle Feedback Prompts, Cortana Web Search, App Advertising IDs, and global Location Services
 
 ### **User Experience & Logging** ✨
 - Detection for Windows Insider / Dev Builds
-- Consistent UI alignment using variable expansion
+- Consistent UI alignment using a unified multi-parameter toggle engine
 - Locale-independent ISO-8601 logging format (YYYY-MM-DD)
 - Clean elevation handoff (automatically kills un-elevated ghost terminals)
 - Displays reclaimed space after cleanup tasks
@@ -90,6 +91,7 @@
 | **Locked Files** | Bypasses in-use files without forced deletion |
 | **Transactional Rollbacks** | Reverts Safe Mode BCD boot flags if the restart command is blocked by the OS |
 | **Build Awareness** | Checks build versions to prevent running unsupported features |
+| **Native Exit Normalization** | Intercepts expected Windows exit codes (e.g., active CHKDSK volume locks) to prevent false-negative errors |
 
 ---
 
