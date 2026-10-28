@@ -1,7 +1,7 @@
 @echo off
 :: ===========================================================================
 :: P R I M U S  -  S Y S T E M   U T I L I T Y
-:: Version 1.3.2 (Build 20260828)
+:: Version 1.4.0 (Build 20261028)
 :: Repository: https://github.com/R4in84/Primus
 :: ===========================================================================
 :: Copyright (c) 2026 Chris Martin
@@ -33,11 +33,11 @@ setlocal EnableDelayedExpansion
 for /f %%A in ('"prompt $H &echo on &for %%B in (1) do rem"') do set "BS=%%A"
 
 :: Version Information
-set "PRIMUS_VERSION=1.3.2"
-set "PRIMUS_BUILD=20260828"
+set "PRIMUS_VERSION=1.4.0"
+set "PRIMUS_BUILD=20261028"
 
 :: Initialise Session Variables
-set "SESSION_TOTAL_BYTES=0"
+set "SESSION_TOTAL_BYTES=0" 
 
 :: UI Layout Constants
 set "M0=          "
@@ -46,8 +46,8 @@ set "M2=    "
 set "SEP=----------------------------------------------------------------------------------------------------"
 set "BAR================================================================================="
 
-:: Define Window Size: 100 Columns, 41 Lines
-mode con: cols=100 lines=41
+:: Define Window Size: 100 Columns, 40 Lines
+mode con: cols=100 lines=40
 title Primus v!PRIMUS_VERSION! - System Utility
 color 0F
 
@@ -64,7 +64,7 @@ if "!OS_BUILD!"=="Unknown" goto :SKIP_OS_MATH
 echo(!OS_BUILD!| findstr /r "^[0-9][0-9]*$" >nul
 if !errorlevel! equ 0 (
     if !OS_BUILD! GEQ 22000 set "OS_NAME=!OS_NAME:Windows 10=Windows 11!"
-    if !OS_BUILD! GEQ 26300 set "DEV_TAG= Dev Build"
+    if !OS_BUILD! GEQ 26340 set "DEV_TAG= Dev Build"
 )
 :SKIP_OS_MATH
 
@@ -175,11 +175,19 @@ timeout /t 3 >nul
 call :CHECK_UPDATES
 
 :: ---------------------------------------------------------------------------
-:: MAIN DASHBOARD
+:: MAIN MENU DISPATCHER
 :: ---------------------------------------------------------------------------
 :MENU
+set "CURRENT_PAGE=1"
+
+:MENU_DRAW
+cls
 call :PRINT_HEADER
 echo.
+
+if "!CURRENT_PAGE!"=="2" goto :DRAW_PAGE_2
+
+:DRAW_PAGE_1
 echo %M0%-- SYSTEM RECOVERY (CRITICAL) --------------------------------------------------
 echo %M1%[A] Create System Restore Point            [B] Clean Restore Points
 echo %M1%[C] Backup System Registry                 [D] Backup System Drivers
@@ -192,19 +200,47 @@ echo %M1%[3] File System Health (CHKDSK)            [4] Core Image Repair (SFC/D
 echo.
 echo %M0%-- NETWORK OPTIMISATION --------------------------------------------------------
 echo %M1%[5] Network Cleanup                        [6] Network Reset/Repair
+echo %M1%[7] DNS Management                         [8] Network Tweaks
 echo.
 echo %M0%-- SYSTEM OPTIMISATION ---------------------------------------------------------
-echo %M1%[7] Storage Optimisation                   [8] Memory Management
-echo.
-echo %M0%-- SECURITY ^& PRIVACY ----------------------------------------------------------
-echo %M1%[9] Security Suite                         [10] Privacy ^& Telemetry
+echo %M1%[9] Storage Optimisation                   [10] Memory Management
 echo.
 echo %M0%%BAR:~0,80%
-echo %M0% [S] SYSTEM INFORMATION          [H] HELP ^& INFO           [Q] QUIT APPLICATION
+echo %M0% [N] NEXT PAGE (1/2)    [S] SYS INFO    [H] HELP ^& INFO    [Q] QUIT APPLICATION
 echo.
+goto :PROMPT_MAIN
+
+:DRAW_PAGE_2
+echo %M0%-- SECURITY ^& PRIVACY ----------------------------------------------------------
+echo %M1%[11] Security Suite                        [12] Privacy ^& Telemetry
+echo.
+echo %M0%-- SYSTEM UI ^& APPS ------------------------------------------------------------
+echo %M1%[13] Windows 11 UI Tweaks                  [14] Software ^& Runtimes (Winget)
+echo.
+echo %M0%%BAR:~0,80%
+echo %M0% [P] PREV PAGE (2/2)    [S] SYS INFO    [H] HELP ^& INFO    [Q] QUIT APPLICATION
+echo.
+
+:PROMPT_MAIN
 set "main_choice="
 set /p "main_choice=%BS%%M0%[Selection] :> "
 
+:: Page navigation
+if /i "!main_choice!"=="N" (
+    set "CURRENT_PAGE=2"
+    goto :MENU_DRAW
+)
+if /i "!main_choice!"=="P" (
+    set "CURRENT_PAGE=1"
+    goto :MENU_DRAW
+)
+
+:: Global hotkeys
+if /i "!main_choice!"=="S" goto :FUNC_SYSINFO
+if /i "!main_choice!"=="H" goto :FUNC_HELP
+if /i "!main_choice!"=="Q" goto :FUNC_EXIT
+
+:: Page 1 selections
 if /i "!main_choice!"=="A" goto :FUNC_CREATE_RESTORE
 if /i "!main_choice!"=="B" goto :FUNC_CLEAN_RESTORE
 if /i "!main_choice!"=="C" goto :FUNC_BACKUP_REGISTRY
@@ -215,14 +251,18 @@ if "!main_choice!"=="3" goto :SUB_DIAG_CHKDSK
 if "!main_choice!"=="4" goto :SUB_REPAIR
 if "!main_choice!"=="5" goto :SUB_NET_GEN
 if "!main_choice!"=="6" goto :SUB_NET_ADV
-if "!main_choice!"=="7" goto :SUB_STORAGE
-if "!main_choice!"=="8" goto :SUB_MEMORY
-if "!main_choice!"=="9" goto :SUB_SECURITY
-if "!main_choice!"=="10" goto :SUB_TELEMETRY
-if /i "!main_choice!"=="S" goto :FUNC_SYSINFO
-if /i "!main_choice!"=="H" goto :FUNC_HELP
-if /i "!main_choice!"=="Q" goto :FUNC_EXIT
-goto :MENU
+if "!main_choice!"=="7" goto :SUB_NET_DNS
+if "!main_choice!"=="8" goto :SUB_NET_TWEAKS
+if "!main_choice!"=="9" goto :SUB_STORAGE
+if "!main_choice!"=="10" goto :SUB_MEMORY
+
+:: Page 2 selections
+if "!main_choice!"=="11" goto :SUB_SECURITY
+if "!main_choice!"=="12" goto :SUB_TELEMETRY
+if "!main_choice!"=="13" goto :SUB_UI_TWEAKS
+if "!main_choice!"=="14" goto :SUB_WINGET_APPS
+
+goto :MENU_DRAW
 
 :: ---------------------------------------------------------------------------
 :: SUB-MENUS
@@ -341,6 +381,59 @@ if "!choice!"=="4" goto :FUNC_WINSOCK_RESET
 if /i "!choice!"=="R" goto :MENU
 goto :SUB_NET_ADV
 
+:SUB_NET_DNS
+cls & echo.
+echo %M2%[ PROCESS ] Querying active DNS configuration...
+set "CUR_DNS="
+for /f "delims=" %%A in ('powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$d=(Get-NetAdapter | Where-Object Status -eq 'Up' -ErrorAction SilentlyContinue | Get-DnsClientServerAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue).ServerAddresses | Select-Object -Unique; if($d){$d -join ' / '}else{'Automatic (DHCP)'}"') do set "CUR_DNS=%%A"
+if not defined CUR_DNS set "CUR_DNS=Unknown or Disconnected"
+
+cls
+call :PRINT_SUB_HEADER "DNS MANAGEMENT"
+echo %M2%      [ Active IPv4 DNS: !CUR_DNS! ]
+echo.
+echo %M1%[1] Cloudflare Standard (1.1.1.1 / 1.0.0.1) - Fast ^& Private
+echo %M1%[2] Cloudflare Security (1.1.1.2 / 1.0.0.2) - Malware Filter
+echo %M1%[3] Cloudflare Family   (1.1.1.3 / 1.0.0.3) - Malware ^& Adult Filter
+echo %M1%[4] Google DNS          (8.8.8.8 / 8.8.4.4) - Reliable
+echo %M1%[5] Quad9               (9.9.9.9 / 149.112.112.112) - Malware Blocking
+echo %M1%[6] AdGuard             (94.140.14.14 / 94.140.15.15) - Ad Blocking
+echo %M1%[7] Restore Default     (Automatic / DHCP)
+call :MENU_FOOTER "R" "RETURN TO MAIN MENU"
+set "dns_choice="
+set /p "dns_choice=%BS%%M0%[Selection] :> "
+
+if "!dns_choice!"=="1" goto :FUNC_DNS_CF_STD
+if "!dns_choice!"=="2" goto :FUNC_DNS_CF_SEC
+if "!dns_choice!"=="3" goto :FUNC_DNS_CF_FAM
+if "!dns_choice!"=="4" goto :FUNC_DNS_GOOGLE
+if "!dns_choice!"=="5" goto :FUNC_DNS_QUAD9
+if "!dns_choice!"=="6" goto :FUNC_DNS_ADGUARD
+if "!dns_choice!"=="7" goto :FUNC_DNS_DHCP
+if /i "!dns_choice!"=="R" goto :MENU
+goto :SUB_NET_DNS
+
+:SUB_NET_TWEAKS
+call :PRINT_SUB_HEADER "NETWORK TWEAKS & LATENCY"
+echo %M1%[1] QoS Reserved Bandwidth   (Reclaim 20%% Reserved Bandwidth)
+echo %M1%[2] Network Throttling Index (Gaming / Streaming Priority)
+echo %M1%[3] Receive Segment Coalesce (RSC Packet Delay / Gaming)
+echo %M1%[4] Nagle's Algorithm        (TCP Packet Buffering / Latency)
+echo %M1%[5] NetBIOS over TCP/IP      (Disable Legacy Protocol / Security)
+echo %M1%[6] LLMNR Broadcast          (Disable Fallback DNS / Security)
+call :MENU_FOOTER "R" "RETURN TO MAIN MENU"
+set "tweak_choice="
+set /p "tweak_choice=%BS%%M0%[Selection] :> "
+
+if "!tweak_choice!"=="1" goto :FUNC_TWEAK_QOS
+if "!tweak_choice!"=="2" goto :FUNC_TWEAK_THROTTLE
+if "!tweak_choice!"=="3" goto :FUNC_TWEAK_RSC
+if "!tweak_choice!"=="4" goto :FUNC_TWEAK_NAGLE
+if "!tweak_choice!"=="5" goto :FUNC_TWEAK_NETBIOS
+if "!tweak_choice!"=="6" goto :FUNC_TWEAK_LLMNR
+if /i "!tweak_choice!"=="R" goto :MENU
+goto :SUB_NET_TWEAKS
+
 :SUB_STORAGE
 call :PRINT_SUB_HEADER "STORAGE OPTIMISATION"
 echo %M1%[1] Trim Solid State Drives (SSDs)         [2] Defragment Hard Drives (HDDs)
@@ -409,6 +502,41 @@ if "!choice!"=="10" goto :FUNC_TEL_LOCATION
 if /i "!choice!"=="R" goto :MENU
 goto :SUB_TELEMETRY
 
+:SUB_UI_TWEAKS
+call :PRINT_SUB_HEADER "WINDOWS 11 UI & EXPLORER TWEAKS"
+echo %M1%[1] Classic Context Menu         (Windows 10 Style Right-Click)
+echo %M1%[2] File Explorer View           (Show Extensions ^& Hidden Files)
+echo %M1%[3] Start Menu Recommendations   (Hide Recent Files ^& Tips)
+echo %M1%[4] Explorer Clutter             (Remove Gallery from Nav Pane)
+echo.
+echo %M1%[X] Restart Windows Explorer     (Instantly Apply Shell Changes)
+call :MENU_FOOTER "R" "RETURN TO MAIN MENU"
+set "ui_choice="
+set /p "ui_choice=%BS%%M0%[Selection] :> "
+
+if "!ui_choice!"=="1" goto :FUNC_UI_CONTEXT
+if "!ui_choice!"=="2" goto :FUNC_UI_EXPLORER
+if "!ui_choice!"=="3" goto :FUNC_UI_STARTMENU
+if "!ui_choice!"=="4" goto :FUNC_UI_GALLERY
+if /i "!ui_choice!"=="X" goto :FUNC_UI_RESTART
+if /i "!ui_choice!"=="R" goto :MENU
+goto :SUB_UI_TWEAKS
+
+:SUB_WINGET_APPS
+call :PRINT_SUB_HEADER "SOFTWARE & RUNTIMES (WINGET)"
+echo %M1%[1] Global App Upgrade       (Patch all installed software)
+echo %M1%[2] Install Core Runtimes    (Deploy Visual C++, DirectX, and .NET)
+echo %M1%[3] Repair Winget Source     (Reset corrupted package manager index)
+call :MENU_FOOTER "R" "RETURN TO MAIN MENU"
+set "win_choice="
+set /p "win_choice=%BS%%M0%[Selection] :> "
+
+if "!win_choice!"=="1" goto :FUNC_WINGET_UPGRADE
+if "!win_choice!"=="2" goto :FUNC_WINGET_RUNTIMES
+if "!win_choice!"=="3" goto :FUNC_WINGET_REPAIR
+if /i "!win_choice!"=="R" goto :MENU
+goto :SUB_WINGET_APPS
+
 :: ---------------------------------------------------------------------------
 :: UI HEADER GENERATOR
 :: ---------------------------------------------------------------------------
@@ -455,7 +583,7 @@ exit /b
 :: ISOLATED COMPARTMENTALIZED FUNCTIONS
 :: ---------------------------------------------------------------------------
 
-:: --- RECOVERY MODULES ---
+:: --- Recovery Modules ---
 :FUNC_CREATE_RESTORE
 cls & echo.
 call :CHECK_FREE_SPACE
@@ -561,7 +689,7 @@ echo.
 if !DISM_ERR! equ 0 (call :LOG "SUCCESS" "RECOVERY" "Drivers successfully exported to !DRV_DIR!" & echo %M2%[ STATUS ] SUCCESS: All 3rd-party drivers safely backed up.) else (call :LOG "ERROR" "RECOVERY" "Driver backup failed (Exit Code: !DISM_ERR!)." & echo %M2%[ ERROR ] FAILED: DISM encountered an error exporting drivers.)
 echo. & echo %M2%[Press any key to return to Menu...] & pause >nul & goto :MENU
 
-:: --- MAINTENANCE MODULES ---
+:: --- Maintenance Modules ---
 :FUNC_AUTO_GEN
 cls & echo.
 echo %M2%[ WARNING ] THIS WILL RUN ALL GENERAL CLEANUP OPERATIONS (1-10).
@@ -1132,7 +1260,7 @@ if !LOG_FAIL! equ 0 (
 echo %M2%[Press any key to return to Menu...] & pause >nul
 goto :SUB_MAINT_ADV
 
-:: --- DIAGNOSTICS MODULES ---
+:: --- Diagnostic Modules ---
 :FUNC_CHKDSK_DIRTY
 cls & echo.
 call :LOG "PROCESS" "DIAGNOSTICS" "Querying volume dirty bit for %SystemDrive%..."
@@ -1195,7 +1323,7 @@ echo %M2%[ STATUS ] Scheduled boot scans have been cancelled.
 call :LOG "SUCCESS" "DIAGNOSTICS" "Scheduled CHKDSK operations cancelled."
 echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_DIAG_CHKDSK
 
-:: --- REPAIR MODULES ---
+:: --- Repair Modules ---
 :FUNC_SFC
 cls & echo.
 call :CHECK_FREE_SPACE
@@ -1255,7 +1383,7 @@ echo.
 call :EVAL_STATUS !DISM_ERR! "REPAIR" "DISM failed to repair the image (Exit Code: !DISM_ERR!)." "DISM successfully repaired the component store image."
 echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_REPAIR
 
-:: --- NETWORK MODULES ---
+:: --- Network Modules ---
 :FUNC_DNS_DISPLAY
 cls
 echo.
@@ -1362,7 +1490,226 @@ echo.
 call :ASK_REBOOT "Winsock"
 goto :SUB_NET_ADV
 
-:: --- STORAGE & MEMORY MODULES ---
+:: --- DNS Managment Functions ---
+:FUNC_DNS_CF_STD
+cls & call :PRINT_HEADER & echo.
+call :LOG "PROCESS" "NETWORK" "Configuring Cloudflare Standard DNS (1.1.1.1 / 1.0.0.1)..."
+echo %M2%[ PROCESS ] Applying Cloudflare Standard DNS to active adapters...
+powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Get-NetAdapter | Where-Object Status -eq 'Up' | Set-DnsClientServerAddress -ServerAddresses ('1.1.1.1','1.0.0.1') -ErrorAction SilentlyContinue" >nul 2>&1
+echo %M2%[ STATUS ] Active adapters configured for Cloudflare Standard DNS.
+call :LOG "SUCCESS" "NETWORK" "Cloudflare Standard DNS applied successfully."
+echo. & echo %M2%[Press any key to return...] & pause >nul
+goto :SUB_NET_DNS
+
+:FUNC_DNS_CF_SEC
+cls & call :PRINT_HEADER & echo.
+call :LOG "PROCESS" "NETWORK" "Configuring Cloudflare Security DNS (1.1.1.2 / 1.0.0.2)..."
+echo %M2%[ PROCESS ] Applying Cloudflare Security DNS to active adapters...
+powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Get-NetAdapter | Where-Object Status -eq 'Up' | Set-DnsClientServerAddress -ServerAddresses ('1.1.1.2','1.0.0.2') -ErrorAction SilentlyContinue" >nul 2>&1
+echo %M2%[ STATUS ] Active adapters configured for Cloudflare Security DNS.
+call :LOG "SUCCESS" "NETWORK" "Cloudflare Security DNS applied successfully."
+echo. & echo %M2%[Press any key to return...] & pause >nul
+goto :SUB_NET_DNS
+
+:FUNC_DNS_CF_FAM
+cls & call :PRINT_HEADER & echo.
+call :LOG "PROCESS" "NETWORK" "Configuring Cloudflare Family DNS (1.1.1.3 / 1.0.0.3)..."
+echo %M2%[ PROCESS ] Applying Cloudflare Family DNS to active adapters...
+powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Get-NetAdapter | Where-Object Status -eq 'Up' | Set-DnsClientServerAddress -ServerAddresses ('1.1.1.3','1.0.0.3') -ErrorAction SilentlyContinue" >nul 2>&1
+echo %M2%[ STATUS ] Active adapters configured for Cloudflare Family DNS.
+call :LOG "SUCCESS" "NETWORK" "Cloudflare Family DNS applied successfully."
+echo. & echo %M2%[Press any key to return...] & pause >nul
+goto :SUB_NET_DNS
+
+:FUNC_DNS_GOOGLE
+cls & call :PRINT_HEADER & echo.
+call :LOG "PROCESS" "NETWORK" "Configuring Google DNS (8.8.8.8 / 8.8.4.4)..."
+echo %M2%[ PROCESS ] Applying Google DNS to active adapters...
+powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Get-NetAdapter | Where-Object Status -eq 'Up' | Set-DnsClientServerAddress -ServerAddresses ('8.8.8.8','8.8.4.4') -ErrorAction SilentlyContinue" >nul 2>&1
+echo %M2%[ STATUS ] Active adapters configured for Google DNS.
+call :LOG "SUCCESS" "NETWORK" "Google DNS applied successfully."
+echo. & echo %M2%[Press any key to return...] & pause >nul
+goto :SUB_NET_DNS
+
+:FUNC_DNS_QUAD9
+cls & call :PRINT_HEADER & echo.
+call :LOG "PROCESS" "NETWORK" "Configuring Quad9 DNS (9.9.9.9 / 149.112.112.112)..."
+echo %M2%[ PROCESS ] Applying Quad9 DNS to active adapters...
+powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Get-NetAdapter | Where-Object Status -eq 'Up' | Set-DnsClientServerAddress -ServerAddresses ('9.9.9.9','149.112.112.112') -ErrorAction SilentlyContinue" >nul 2>&1
+echo %M2%[ STATUS ] Active adapters configured for Quad9 DNS.
+call :LOG "SUCCESS" "NETWORK" "Quad9 DNS applied successfully."
+echo. & echo %M2%[Press any key to return...] & pause >nul
+goto :SUB_NET_DNS
+
+:FUNC_DNS_ADGUARD
+cls & call :PRINT_HEADER & echo.
+call :LOG "PROCESS" "NETWORK" "Configuring AdGuard DNS (94.140.14.14 / 94.140.15.15)..."
+echo %M2%[ PROCESS ] Applying AdGuard DNS to active adapters...
+powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Get-NetAdapter | Where-Object Status -eq 'Up' | Set-DnsClientServerAddress -ServerAddresses ('94.140.14.14','94.140.15.15') -ErrorAction SilentlyContinue" >nul 2>&1
+echo %M2%[ STATUS ] Active adapters configured for AdGuard DNS.
+call :LOG "SUCCESS" "NETWORK" "AdGuard DNS applied successfully."
+echo. & echo %M2%[Press any key to return...] & pause >nul
+goto :SUB_NET_DNS
+
+:FUNC_DNS_DHCP
+cls & call :PRINT_HEADER & echo.
+call :LOG "PROCESS" "NETWORK" "Restoring DNS to DHCP automatic assignment..."
+echo %M2%[ PROCESS ] Resetting DNS addresses on active adapters...
+powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Get-NetAdapter | Where-Object Status -eq 'Up' | Set-DnsClientServerAddress -ResetServerAddresses -ErrorAction SilentlyContinue" >nul 2>&1
+echo %M2%[ STATUS ] Active adapters restored to automatic DHCP DNS.
+call :LOG "SUCCESS" "NETWORK" "DNS restored to DHCP defaults."
+echo. & echo %M2%[Press any key to return...] & pause >nul
+goto :SUB_NET_DNS
+
+:: --- Network Tweaks ---
+:FUNC_TWEAK_QOS
+echo.
+echo %M2%[ INFO ] By default, Windows reserves 20%% of your bandwidth for QoS
+echo %M2%[ INFO ] priorities. This tweak removes the limit, granting 100%% to apps.
+echo.
+call :PROMPT_TOGGLE "QOS RESERVED BANDWIDTH" "Remove QoS Reserve (100%% Bandwidth Available)" "Restore QoS Reserve (Windows Default 80/20 Split)" "RETURN TO TWEAKS MENU"
+if !errorlevel! equ 0 goto :SUB_NET_TWEAKS
+set "Q_STATE=!errorlevel!"
+cls & call :PRINT_HEADER & echo.
+if "!Q_STATE!"=="1" (
+    set "S_MSG=disabled (100%% bandwidth unreserved)"
+    call :REG_ENGINE "QoS Bandwidth Reserve" "ADD" "HKLM\SOFTWARE\Policies\Microsoft\Windows\Psched" "NonBestEffortLimit" "REG_DWORD" "0" "0x0"
+) else (
+    set "S_MSG=restored to default 80/20 split"
+    call :REG_ENGINE "QoS Bandwidth Reserve" "DEL" "HKLM\SOFTWARE\Policies\Microsoft\Windows\Psched" "NonBestEffortLimit"
+)
+goto :SUB_NET_TWEAKS
+
+:FUNC_TWEAK_THROTTLE
+echo.
+echo %M2%[ INFO ] Disabling throttling stops Windows from capping non-media packets
+echo %M2%[ INFO ] when games, Discord, or media streams are running simultaneously.
+echo.
+call :PROMPT_TOGGLE "NETWORK THROTTLING INDEX" "Disable Throttling (Maximum Throughput / Gaming)" "Enable Throttling  (Windows Default - 10 packets/ms)" "RETURN TO TWEAKS MENU"
+if !errorlevel! equ 0 goto :SUB_NET_TWEAKS
+set "T_STATE=!errorlevel!"
+cls & call :PRINT_HEADER & echo.
+if "!T_STATE!"=="1" (
+    set "S_MSG=disabled"
+    reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "NetworkThrottlingIndex" /t REG_DWORD /d 4294967295 /f >nul 2>&1
+    reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t REG_DWORD /d 0 /f >nul 2>&1
+    call :REG_ENGINE "Network Throttling" "ADD" "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" "NetworkThrottlingIndex" "REG_DWORD" "4294967295" "0xffffffff"
+) else (
+    set "S_MSG=restored"
+    reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "NetworkThrottlingIndex" /t REG_DWORD /d 10 /f >nul 2>&1
+    reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t REG_DWORD /d 20 /f >nul 2>&1
+    call :REG_ENGINE "Network Throttling" "ADD" "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" "NetworkThrottlingIndex" "REG_DWORD" "10" "0xa"
+)
+goto :SUB_NET_TWEAKS
+
+:FUNC_TWEAK_RSC
+echo.
+echo %M2%[ INFO ] RSC merges incoming packets. Disabling it reduces packet delay
+echo %M2%[ INFO ] for competitive gaming, but may lower raw throughput slightly.
+echo.
+call :PROMPT_TOGGLE "RECEIVE SEGMENT COALESCING (RSC)" "Disable RSC (Lowest Latency / Gaming)" "Enable RSC  (Windows Default / Throughput)" "RETURN TO TWEAKS MENU"
+if !errorlevel! equ 0 goto :SUB_NET_TWEAKS
+set "R_STATE=!errorlevel!"
+cls & call :PRINT_HEADER & echo.
+if "!R_STATE!"=="1" (
+    call :LOG "PROCESS" "NETWORK" "Disabling RSC globally..."
+    echo %M2%[ PROCESS ] Disabling Receive Segment Coalescing...
+    netsh int tcp set global rsc=disabled >nul 2>&1
+    call :EVAL_STATUS !errorlevel! "NETWORK" "Failed to disable RSC." "RSC successfully disabled globally."
+) else (
+    call :LOG "PROCESS" "NETWORK" "Enabling RSC globally..."
+    echo %M2%[ PROCESS ] Restoring Receive Segment Coalescing...
+    netsh int tcp set global rsc=default >nul 2>&1
+    call :EVAL_STATUS !errorlevel! "NETWORK" "Failed to restore RSC." "RSC successfully restored to default."
+)
+echo. & echo %M2%[Press any key to return...] & pause >nul
+goto :SUB_NET_TWEAKS
+
+:FUNC_TWEAK_NAGLE
+echo.
+echo %M2%[ WARNING ] Disabling Nagle reduces packet latency in multiplayer games,
+echo %M2%[ WARNING ] but may slightly reduce efficiency during bulk file transfers.
+echo.
+call :PROMPT_TOGGLE "NAGLE'S ALGORITHM (TCP DELAY)" "Disable Nagle's Algorithm (Lowest Latency / Gaming)" "Enable Nagle's Algorithm  (Windows Default / Balanced)" "RETURN TO TWEAKS MENU"
+if !errorlevel! equ 0 goto :SUB_NET_TWEAKS
+set "N_STATE=!errorlevel!"
+cls & call :PRINT_HEADER & echo.
+
+if "!N_STATE!"=="1" (
+    call :LOG "PROCESS" "NETWORK" "Disabling Nagle's Algorithm on active network interfaces..."
+    echo %M2%[ PROCESS ] Injecting TcpAckFrequency and TCPNoDelay across active adapters...
+    powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$adapters = Get-NetAdapter | Where-Object Status -eq 'Up'; foreach ($a in $adapters) { $p = 'HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\' + $a.DeviceID; if (Test-Path $p) { Set-ItemProperty -Path $p -Name 'TcpAckFrequency' -Value 1 -Type DWord -ErrorAction SilentlyContinue; Set-ItemProperty -Path $p -Name 'TCPNoDelay' -Value 1 -Type DWord -ErrorAction SilentlyContinue } }" >nul 2>&1
+    echo %M2%[ STATUS ] Nagle's Algorithm disabled for active network adapters.
+    call :LOG "SUCCESS" "NETWORK" "Nagle's Algorithm disabled successfully."
+) else (
+    call :LOG "PROCESS" "NETWORK" "Restoring default Nagle's Algorithm settings..."
+    echo %M2%[ PROCESS ] Removing TCP latency override keys...
+    powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$adapters = Get-NetAdapter; foreach ($a in $adapters) { $p = 'HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\' + $a.DeviceID; if (Test-Path $p) { Remove-ItemProperty -Path $p -Name 'TcpAckFrequency' -ErrorAction SilentlyContinue; Remove-ItemProperty -Path $p -Name 'TCPNoDelay' -ErrorAction SilentlyContinue } }" >nul 2>&1
+    echo %M2%[ STATUS ] Nagle's Algorithm restored to Windows defaults.
+    call :LOG "SUCCESS" "NETWORK" "Nagle's Algorithm restored to defaults."
+)
+echo. & echo %M2%[Press any key to return...] & pause >nul
+goto :SUB_NET_TWEAKS
+
+:FUNC_TWEAK_NETBIOS
+echo.
+echo %M2%[ WARNING ] Disabling NetBIOS secures your adapter against local network
+echo %M2%[ WARNING ] spoofing, but may break older local file sharing setups.
+echo.
+call :PROMPT_TOGGLE "NETBIOS OVER TCP/IP" "Disable NetBIOS (Security / Less Broadcast Noise)" "Restore NetBIOS (Windows Default / DHCP)" "RETURN TO TWEAKS MENU"
+if !errorlevel! equ 0 goto :SUB_NET_TWEAKS
+set "NB_STATE=!errorlevel!"
+cls & call :PRINT_HEADER & echo.
+
+:: Flat routing to prevent CMD parser crashing on PowerShell pipes
+if "!NB_STATE!"=="1" goto :NETBIOS_DISABLE
+goto :NETBIOS_ENABLE
+
+:NETBIOS_DISABLE
+call :LOG "PROCESS" "NETWORK" "Disabling NetBIOS globally..."
+echo %M2%[ PROCESS ] Disabling NetBIOS over TCP/IP...
+powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Get-ChildItem 'HKLM:\SYSTEM\CurrentControlSet\Services\NetBT\Parameters\Interfaces' | Set-ItemProperty -Name 'NetbiosOptions' -Value 2 -ErrorAction SilentlyContinue" >nul 2>&1
+echo %M2%[ STATUS ] NetBIOS successfully disabled on network adapters.
+call :LOG "SUCCESS" "NETWORK" "NetBIOS disabled successfully."
+goto :NETBIOS_END
+
+:NETBIOS_ENABLE
+call :LOG "PROCESS" "NETWORK" "Restoring NetBIOS globally..."
+echo %M2%[ PROCESS ] Restoring NetBIOS over TCP/IP to Default (DHCP)...
+powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Get-ChildItem 'HKLM:\SYSTEM\CurrentControlSet\Services\NetBT\Parameters\Interfaces' | Set-ItemProperty -Name 'NetbiosOptions' -Value 0 -ErrorAction SilentlyContinue" >nul 2>&1
+echo %M2%[ STATUS ] NetBIOS successfully restored to default on network adapters.
+call :LOG "SUCCESS" "NETWORK" "NetBIOS restored successfully."
+goto :NETBIOS_END
+
+:NETBIOS_END
+echo. & echo %M2%[Press any key to return...] & pause >nul
+goto :SUB_NET_TWEAKS
+
+:FUNC_TWEAK_LLMNR
+echo.
+echo %M2%[ INFO ] LLMNR broadcasts across your local network when DNS fails.
+echo %M2%[ INFO ] Disabling it stops local broadcast noise and secures against spoofing.
+echo.
+call :PROMPT_TOGGLE "LLMNR BROADCAST RESOLUTION" "Disable LLMNR (Security / Stop Broadcast Noise)" "Restore LLMNR (Windows Default)" "RETURN TO TWEAKS MENU"
+if !errorlevel! equ 0 goto :SUB_NET_TWEAKS
+set "LL_STATE=!errorlevel!"
+cls & call :PRINT_HEADER & echo.
+
+:: Flat routing for stability
+if "!LL_STATE!"=="1" goto :LLMNR_DISABLE
+goto :LLMNR_ENABLE
+
+:LLMNR_DISABLE
+set "S_MSG=disabled"
+call :REG_ENGINE "LLMNR Broadcast" "ADD" "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient" "EnableMulticast" "REG_DWORD" "0" "0x0"
+goto :SUB_NET_TWEAKS
+
+:LLMNR_ENABLE
+set "S_MSG=restored to default"
+call :REG_ENGINE "LLMNR Broadcast" "DEL" "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient" "EnableMulticast"
+goto :SUB_NET_TWEAKS
+
+:: --- Storage & Memory Modules ---
 :FUNC_TRIM_SSD
 cls & echo.
 echo %M2%[ INFO ] This will send the TRIM command to all connected Solid State Drives.
@@ -1566,7 +1913,7 @@ echo %M2%[ STATUS ] Active application memory footprints minimised.
 call :LOG "SUCCESS" "OPTIMISATION" "Active Working Sets successfully flushed."
 echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_MEMORY
 
-:: --- SECURITY & PRIVACY MODULES ---
+:: --- Security & Privacy Modules ---
 :FUNC_MSERT_SCAN
 cls
 echo.
@@ -1979,6 +2326,242 @@ if "!T_STATE!"=="1" (
 )
 goto :SUB_TELEMETRY
 
+:: -- Win UI Tweaks
+:FUNC_UI_CONTEXT
+echo.
+echo %M2%[ INFO ] Restores the classic Windows 10 right-click context menu,
+echo %M2%[ INFO ] removing the need to click "Show more options".
+echo.
+call :PROMPT_TOGGLE "CLASSIC CONTEXT MENU" "Enable Classic Menu (Windows 10 Style)" "Restore Default Menu (Windows 11 Style)" "RETURN TO UI TWEAKS"
+if !errorlevel! equ 0 goto :SUB_UI_TWEAKS
+set "UIC_STATE=!errorlevel!"
+cls & call :PRINT_HEADER & echo.
+
+if "!UIC_STATE!"=="1" goto :UIC_ENABLE
+goto :UIC_DISABLE
+
+:UIC_ENABLE
+call :LOG "PROCESS" "UI_TWEAKS" "Enabling classic context menu..."
+echo %M2%[ PROCESS ] Injecting classic context menu registry keys...
+reg add "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" /ve /t REG_SZ /d "" /f >nul 2>&1
+echo %M2%[ STATUS ] Classic context menu enabled. (Restart Explorer to apply).
+call :LOG "SUCCESS" "UI_TWEAKS" "Classic context menu enabled."
+goto :UIC_END
+
+:UIC_DISABLE
+call :LOG "PROCESS" "UI_TWEAKS" "Restoring default Windows 11 context menu..."
+echo %M2%[ PROCESS ] Removing registry overrides...
+reg delete "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}" /f >nul 2>&1
+echo %M2%[ STATUS ] Windows 11 default context menu restored. (Restart Explorer to apply).
+call :LOG "SUCCESS" "UI_TWEAKS" "Default context menu restored."
+goto :UIC_END
+
+:UIC_END
+echo. & echo %M2%[Press any key to return...] & pause >nul
+goto :SUB_UI_TWEAKS
+
+:FUNC_UI_EXPLORER
+echo.
+echo %M2%[ INFO ] Forces File Explorer to always show file extensions (e.g. .exe, .txt)
+echo %M2%[ INFO ] and unhides system/hidden files for power user visibility.
+echo.
+call :PROMPT_TOGGLE "FILE EXPLORER VIEW" "Show Extensions and Hidden Files (Power User)" "Hide Extensions and Hidden Files (Windows Default)" "RETURN TO UI TWEAKS"
+if !errorlevel! equ 0 goto :SUB_UI_TWEAKS
+set "UIE_STATE=!errorlevel!"
+cls & call :PRINT_HEADER & echo.
+
+if "!UIE_STATE!"=="1" goto :UIE_ENABLE
+goto :UIE_DISABLE
+
+:UIE_ENABLE
+call :LOG "PROCESS" "UI_TWEAKS" "Configuring Explorer to show extensions and hidden files..."
+echo %M2%[ PROCESS ] Applying advanced Explorer views...
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "HideFileExt" /t REG_DWORD /d 0 /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "Hidden" /t REG_DWORD /d 1 /f >nul 2>&1
+echo %M2%[ STATUS ] File extensions and hidden files are now visible.
+call :LOG "SUCCESS" "UI_TWEAKS" "Explorer view configured for power users."
+goto :UIE_END
+
+:UIE_DISABLE
+call :LOG "PROCESS" "UI_TWEAKS" "Restoring Explorer view to default..."
+echo %M2%[ PROCESS ] Hiding extensions and hidden files...
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "HideFileExt" /t REG_DWORD /d 1 /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "Hidden" /t REG_DWORD /d 2 /f >nul 2>&1
+echo %M2%[ STATUS ] Explorer view restored to Windows defaults.
+call :LOG "SUCCESS" "UI_TWEAKS" "Explorer view restored to defaults."
+goto :UIE_END
+
+:UIE_END
+echo. & echo %M2%[Press any key to return...] & pause >nul
+goto :SUB_UI_TWEAKS
+
+:FUNC_UI_STARTMENU
+echo.
+echo %M2%[ INFO ] Removes the "Recommended" section from the Start Menu,
+echo %M2%[ INFO ] stopping Windows from tracking recently opened files and apps.
+echo.
+call :PROMPT_TOGGLE "START MENU RECOMMENDATIONS" "Hide Recommended Section (Clean Start Menu)" "Show Recommended Section (Windows Default)" "RETURN TO UI TWEAKS"
+if !errorlevel! equ 0 goto :SUB_UI_TWEAKS
+set "UIM_STATE=!errorlevel!"
+cls & call :PRINT_HEADER & echo.
+
+if "!UIM_STATE!"=="1" goto :UIM_ENABLE
+goto :UIM_DISABLE
+
+:UIM_ENABLE
+call :LOG "PROCESS" "UI_TWEAKS" "Disabling Start Menu recommendations..."
+echo %M2%[ PROCESS ] Applying Start Menu policy...
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Explorer" /v "HideRecommendedSection" /t REG_DWORD /d 1 /f >nul 2>&1
+echo %M2%[ STATUS ] Recommended section hidden. (Restart Explorer to apply).
+call :LOG "SUCCESS" "UI_TWEAKS" "Start Menu recommendations disabled."
+goto :UIM_END
+
+:UIM_DISABLE
+call :LOG "PROCESS" "UI_TWEAKS" "Restoring Start Menu recommendations..."
+echo %M2%[ PROCESS ] Removing Start Menu policy...
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\Explorer" /v "HideRecommendedSection" /f >nul 2>&1
+echo %M2%[ STATUS ] Recommended section restored to Windows defaults.
+call :LOG "SUCCESS" "UI_TWEAKS" "Start Menu recommendations restored."
+goto :UIM_END
+
+:UIM_END
+echo. & echo %M2%[Press any key to return...] & pause >nul
+goto :SUB_UI_TWEAKS
+
+:FUNC_UI_GALLERY
+echo.
+echo %M2%[ INFO ] Removes the new "Gallery" node from the left-hand navigation
+echo %M2%[ INFO ] pane in File Explorer to reduce visual clutter.
+echo.
+call :PROMPT_TOGGLE "EXPLORER GALLERY NODE" "Remove Gallery from Navigation Pane" "Restore Gallery to Navigation Pane" "RETURN TO UI TWEAKS"
+if !errorlevel! equ 0 goto :SUB_UI_TWEAKS
+set "UIG_STATE=!errorlevel!"
+cls & call :PRINT_HEADER & echo.
+
+if "!UIG_STATE!"=="1" goto :UIG_ENABLE
+goto :UIG_DISABLE
+
+:UIG_ENABLE
+call :LOG "PROCESS" "UI_TWEAKS" "Removing Gallery from File Explorer..."
+echo %M2%[ PROCESS ] Applying Windows 11 26H2 Gallery CLSID overrides...
+reg add "HKCU\Software\Classes\CLSID\{e88865ea-0e1c-4e20-9aa6-edcd0212c87c}" /v "System.IsPinnedToNameSpaceTree" /t REG_DWORD /d 0 /f >nul 2>&1
+reg add "HKCU\Software\Classes\WOW6432Node\CLSID\{e88865ea-0e1c-4e20-9aa6-edcd0212c87c}" /v "System.IsPinnedToNameSpaceTree" /t REG_DWORD /d 0 /f >nul 2>&1
+echo %M2%[ STATUS ] Gallery removed from Navigation Pane. (Restart Explorer to apply).
+call :LOG "SUCCESS" "UI_TWEAKS" "Explorer Gallery removed."
+goto :UIG_END
+
+:UIG_DISABLE
+call :LOG "PROCESS" "UI_TWEAKS" "Restoring Gallery to File Explorer..."
+echo %M2%[ PROCESS ] Removing registry overrides...
+reg delete "HKCU\Software\Classes\CLSID\{e88865ea-0e1c-4e20-9aa6-edcd0212c87c}" /f >nul 2>&1
+reg delete "HKCU\Software\Classes\WOW6432Node\CLSID\{e88865ea-0e1c-4e20-9aa6-edcd0212c87c}" /f >nul 2>&1
+echo %M2%[ STATUS ] Gallery restored to Navigation Pane. (Restart Explorer to apply).
+call :LOG "SUCCESS" "UI_TWEAKS" "Explorer Gallery restored."
+goto :UIG_END
+
+:UIG_END
+echo. & echo %M2%[Press any key to return...] & pause >nul
+goto :SUB_UI_TWEAKS
+
+:FUNC_UI_RESTART
+echo.
+call :LOG "PROCESS" "UI_TWEAKS" "Restarting Windows Explorer shell..."
+echo %M2%[ PROCESS ] Terminating explorer.exe...
+taskkill /f /im explorer.exe >nul 2>&1
+echo %M2%[ PROCESS ] Starting explorer.exe...
+start explorer.exe
+echo %M2%[ STATUS ] Shell successfully restarted. Registry changes applied.
+echo. & echo %M2%[Press any key to return...] & pause >nul
+goto :SUB_UI_TWEAKS
+
+:: --- Software & Runtimes (WINGET) --
+:FUNC_WINGET_UPGRADE
+cls & echo.
+echo %M0%-- GLOBAL APP UPGRADE --------------------------------------------------------
+echo.
+echo %M2%[ INFO ] This will scan all installed software and upgrade out-of-date
+echo %M2%[ INFO ] applications to their latest versions using Microsoft Winget.
+echo.
+call :ASK_CONFIRM "Proceed with Global Upgrade?"
+if !errorlevel! neq 0 (echo. & echo %M2%[ INFO ] Operation cancelled. Returning... & timeout /t 1 >nul & goto :SUB_WINGET_APPS)
+echo.
+call :LOG "PROCESS" "SOFTWARE" "Initiating global winget application upgrade..."
+echo %M2%[ PROCESS ] Agreeing to source agreements and fetching package list...
+winget upgrade --accept-source-agreements >nul 2>&1
+echo.
+echo %M2%[ PROCESS ] Scanning for updates and applying upgrades...
+echo.
+winget upgrade --all --include-unknown --accept-package-agreements
+set "WIN_ERR=!errorlevel!"
+echo.
+if !WIN_ERR! equ 0 (
+    echo %M2%[ STATUS ] All eligible applications successfully upgraded.
+    call :LOG "SUCCESS" "SOFTWARE" "Global app upgrade completed successfully."
+) else if !WIN_ERR! equ -1978335189 (
+    echo %M2%[ STATUS ] No applicable updates found. All software is up to date.
+    call :LOG "INFO" "SOFTWARE" "Winget scan found no updates available."
+) else (
+    echo %M2%[ WARNING ] Winget encountered an error or partial failure ^(Code: !WIN_ERR!^).
+    echo %M2%[ INFO ] Some applications may require manual updating or are locked.
+    call :LOG "WARNING" "SOFTWARE" "Global app upgrade completed with errors (Exit Code: !WIN_ERR!)."
+)
+echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_WINGET_APPS
+
+:FUNC_WINGET_RUNTIMES
+cls & echo.
+echo %M0%-- INSTALL CORE RUNTIMES -----------------------------------------------------
+echo.
+echo %M2%[ INFO ] This deploys essential runtimes required by most games and apps:
+echo %M2%[ INFO ] - Microsoft Visual C++ (2015-2022 All Architectures)
+echo %M2%[ INFO ] - DirectX End-User Runtime Web Installer
+echo %M2%[ INFO ] - Microsoft .NET Desktop Runtime (8 and 10)
+echo.
+call :ASK_CONFIRM "Proceed with Installation?"
+if !errorlevel! neq 0 (echo. & echo %M2%[ INFO ] Operation cancelled. Returning... & timeout /t 1 >nul & goto :SUB_WINGET_APPS)
+echo.
+call :LOG "PROCESS" "SOFTWARE" "Installing core system runtimes via Winget..."
+
+echo %M2%[ PROCESS ] Installing Microsoft Visual C++ Redistributables...
+echo.
+winget install Microsoft.VCRedist.2015+.x64 -e --accept-package-agreements --accept-source-agreements
+winget install Microsoft.VCRedist.2015+.x86 -e --accept-package-agreements --accept-source-agreements
+echo.
+
+echo %M2%[ PROCESS ] Installing DirectX End-User Runtimes...
+echo.
+winget install Microsoft.DirectX -e --accept-package-agreements --accept-source-agreements
+echo.
+
+echo %M2%[ PROCESS ] Installing Microsoft .NET Desktop Runtimes (8 and 10)...
+echo.
+winget install Microsoft.DotNet.DesktopRuntime.8 -e --accept-package-agreements --accept-source-agreements
+winget install Microsoft.DotNet.DesktopRuntime.10 -e --accept-package-agreements --accept-source-agreements
+echo.
+
+echo %M2%[ STATUS ] Core runtimes successfully deployed.
+call :LOG "SUCCESS" "SOFTWARE" "Core runtimes installed successfully."
+echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_WINGET_APPS
+
+:FUNC_WINGET_REPAIR
+cls & echo.
+echo %M0%-- REPAIR WINGET SOURCE ------------------------------------------------------
+echo.
+echo %M2%[ INFO ] This resets the local Winget package manager indexes.
+echo %M2%[ INFO ] Use this if Winget fails to find apps or throws source errors.
+echo.
+call :ASK_CONFIRM "Proceed with Winget Repair?"
+if !errorlevel! neq 0 (echo. & echo %M2%[ INFO ] Operation cancelled. Returning... & timeout /t 1 >nul & goto :SUB_WINGET_APPS)
+echo.
+call :LOG "PROCESS" "SOFTWARE" "Initiating Winget source reset..."
+echo %M2%[ PROCESS ] Resetting Winget sources to default...
+winget source reset --force >nul 2>&1
+echo %M2%[ PROCESS ] Updating source repositories...
+winget source update >nul 2>&1
+echo.
+echo %M2%[ STATUS ] Winget package manager repaired and sources updated.
+call :LOG "SUCCESS" "SOFTWARE" "Winget sources successfully reset and updated."
+echo. & echo %M2%[Press any key to return...] & pause >nul & goto :SUB_WINGET_APPS
+
 :: ---------------------------------------------------------------------------
 :: System Info
 :: ---------------------------------------------------------------------------
@@ -2021,26 +2604,26 @@ call :PRINT_HEADER
 echo.
 echo           -- HELP ^& INFORMATION (PAGE 1 OF 3) --------------------------------------------
 echo.
-echo             [ ABOUT ]
-echo              Primus is a system maintenance utility designed to safely perform
-echo              common Windows cleanup tasks, repair and optimisations.
+echo            [ ABOUT ]
+echo             Primus is a system maintenance utility designed to safely perform
+echo             common Windows cleanup tasks, repair and optimisations.
 echo.
-echo             [ LOGGING SYSTEM ]
-echo              Location:  %ProgramData%\Primus\Logs\
-echo              Retention: 30 Days (Automatic background cleanup)
-echo              Format:    Primus_YYYYMMDD_HHMMSS.log (Locale-independent ISO)
+echo            [ LOGGING SYSTEM ]
+echo             Location:  %ProgramData%\Primus\Logs\
+echo             Retention: 30 Days (Automatic background cleanup)
+echo             Format:    Primus_YYYYMMDD_HHMMSS.log (Locale-independent ISO)
 echo.
-echo             [ SAFETY PROTOCOLS ]
-echo              * Always create a Restore Point before major operations.
-echo              * Active/In-use files are automatically skipped during cleanup.
-echo              * WMI crash-guards and transactional rollbacks protect OS state.
-echo              * All destructive operations require Y/N confirmation.
+echo            [ SAFETY PROTOCOLS ]
+echo             * Always create a Restore Point before major operations.
+echo             * Active/In-use files are automatically skipped during cleanup.
+echo             * WMI crash-guards and transactional rollbacks protect OS state.
+echo             * All destructive operations require Y/N confirmation.
 echo.
-echo             [ SUPPORT ]
-echo              GitHub: https://github.com/R4in84/Primus
+echo            [ SUPPORT ]
+echo             GitHub: https://github.com/R4in84/Primus
 echo.
-echo            ================================================================================
-echo             [Press any key to view Tool Descriptions...]
+echo           ================================================================================
+echo            [Press any key to view Tool Descriptions...]
 pause >nul
 
 cls
@@ -2048,24 +2631,25 @@ call :PRINT_HEADER
 echo.
 echo           -- TOOL DESCRIPTIONS (PAGE 2 OF 3) ---------------------------------------------
 echo.
-echo             [ SYSTEM RECOVERY ]
-echo              Creates VSS snapshots, purges old backups, and performs bare-metal
-echo              exports of core registry hives and 3rd-party hardware drivers.
+echo            [ SYSTEM RECOVERY ]
+echo             Creates VSS snapshots, purges old backups, and performs bare-metal
+echo             exports of core registry hives and 3rd-party hardware drivers.
 echo.
-echo             [ SYSTEM MAINTENANCE ]
-echo              Clears temporary directories, rebuilds broken icon caches, deep
-echo              cleans browser telemetry, and optimises the WinSxS store.
+echo            [ SYSTEM MAINTENANCE ]
+echo             Clears temporary directories, rebuilds broken icon caches, deep
+echo             cleans browser telemetry, and optimises the WinSxS store.
 echo.
-echo             [ SYSTEM DIAGNOSTICS ^& REPAIR ]
-echo              Queries file system dirty bits, schedules offline volume repairs,
-echo              and utilises native SFC/DISM tools to fix core image corruption.
+echo            [ SYSTEM DIAGNOSTICS ^& REPAIR ]
+echo             Queries file system dirty bits, schedules offline volume repairs,
+echo             and utilises native SFC/DISM tools to fix core image corruption.
 echo.
-echo             [ NETWORK OPTIMISATION ]
-echo              Flushes DNS/ARP routing tables and performs deep resets of the 
-echo              TCP/IP stack and Winsock catalogue to resolve offline bugs.
+echo            [ NETWORK OPTIMISATION ]
+echo             Flushes DNS/ARP routing tables, performs Winsock/TCP stack resets,
+echo             manages active DNS routing, and toggles advanced network latency
+echo             and security tweaks (QoS, RSC, Nagle's, NetBIOS, and LLMNR).
 echo.
-echo            ================================================================================
-echo             [Press any key to view Next Page...]
+echo           ================================================================================
+echo            [Press any key to view Next Page...]
 pause >nul
 
 cls
@@ -2073,22 +2657,25 @@ call :PRINT_HEADER
 echo.
 echo           -- TOOL DESCRIPTIONS (PAGE 3 OF 3) ---------------------------------------------
 echo.
-echo             [ SYSTEM OPTIMISATION ]
-echo              Optimises drives via SSD trimming and HDD defragmentation, manages
-echo              System Compression (CompactOS), and caps VSS/Reserved Storage.
+echo            [ SYSTEM OPTIMISATION ]
+echo             Optimises drives via SSD trimming and HDD defragmentation, manages
+echo             System Compression (CompactOS), and caps VSS/Reserved Storage.
 echo.
-echo             [ SECURITY SUITE ]
-echo              Downloads Microsoft Safety Scanner (x86/x64/ARM64 auto-detect), 
-echo              resets Firewall profiles, and utilizes Safe Mode for Defender cleans.
+echo            [ SECURITY SUITE ]
+echo             Downloads Microsoft Safety Scanner (x86/x64/ARM64 auto-detect), 
+echo             resets Firewall profiles, and utilises Safe Mode for Defender cleans.
 echo.
-echo             [ PRIVACY ^& TELEMETRY ]
-echo              Controls OS data collection, WER error reporting, CEIP tasks, Activity
-echo              History, Inking/Typing, Tailored Experiences, Feedback Prompts, Cortana
-echo              web search, App Advertising IDs, and global Location Services.
+echo            [ PRIVACY ^& TELEMETRY ]
+echo             Disables OS Telemetry, Error Reporting (WER), CEIP Tasks, Activity
+echo             History, Tailored Experiences, Cortana/Web Search, Ad IDs, and Location.
+echo.
+echo            [ SYSTEM UI ^& APPS ]
+echo             Toggles Windows 11 UI settings (Classic Context Menu, Explorer clutter)
+echo             and utilises Winget to globally upgrade apps and deploy core runtimes.
 echo.
 echo           ================================================================================
 call :LOG "INFO" "SYSTEM" "User accessed Help & Information module."
-echo              [Press any key to return to Main Menu...]
+echo            [Press any key to return to Main Menu...]
 pause >nul
 goto :MENU
 
