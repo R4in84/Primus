@@ -1,10 +1,10 @@
 # 🛠️ Primus - System Utility
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Licence: MIT](https://img.shields.io/badge/Licence-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D4?logo=windows)](https://www.microsoft.com/windows)
-[![Version](https://img.shields.io/badge/Version-1.3.2-success)](https://github.com/R4in84/Primus/releases)
+[![Version](https://img.shields.io/badge/Version-1.4.0-success)](https://github.com/R4in84/Primus/releases)
 
-> Primus is a collection of scripts I use to maintain, clean, and optimize Windows 10/11. It consolidates various system tasks into a single interface with built-in safety checks and logging.
+> Primus is a collection of scripts I use to maintain, clean, and optimise Windows 10/11. It consolidates various system tasks into a single interface with built-in safety checks and logging.
 
 > It uses native Windows tools (SFC, DISM, CHKDSK, and PowerShell) to help with system health, file system issues, and privacy settings. Supports x86, x64, and ARM64 architectures.
 
@@ -23,7 +23,7 @@
 - Checks for disk space before running tasks
 
 ### **System Maintenance** 🧹
-- Organized sub-menus for General and Deep cleanup tasks
+- Organised sub-menus for General and Deep cleanup tasks
 - Clean up temporary files (User + System)
 - Reset Windows Update download cache
 - Clear crash dumps and error reports
@@ -40,17 +40,19 @@
 ### **System Diagnostics & Repair** 🔧
 - Query volume dirty bits
 - Read-only integrity scans
-- Schedule and cancel offline repairs (with native lock return-code normalization)
+- Schedule and cancel offline repairs (with native lock return-code normalisation)
 - System File Checker (SFC) with basic log parsing
 - DISM health checks and image scans
 - DISM image repair with reboot-pending detection
 
-### **Network Tools** 🌐
+### **Network Optimisation** 🌐
 - Display and flush DNS/ARP caches
 - Release and renew IP addresses
 - Reset TCP/IP stack and Winsock (includes config backups)
+- **DNS Management:** Quickly switch active adapters between Cloudflare (Standard/Security/Family), Google, Quad9, AdGuard, or automatic DHCP[cite: 3].
+- **Network Tweaks:** Toggle advanced latency and security settings including QoS Reserved Bandwidth, Network Throttling, RSC, Nagle's Algorithm, NetBIOS, and LLMNR[cite: 3].
 
-### **System Optimization** ⚙️
+### **System Optimisation** ⚙️
 - SSD TRIM and HDD defragmentation
 - CompactOS system compression (Enable/Disable)
 - Manage Hibernation file size (Disable / Reduced / Full)
@@ -69,7 +71,11 @@
   - Manage Activity History, Inking/Typing Personalisation, and Tailored Experiences
   - Toggle Feedback Prompts, Cortana Web Search, App Advertising IDs, and global Location Services
 
-### **User Experience & Logging** ✨
+### **System UI & Apps** ✨
+- **Windows 11 UI Tweaks:** Restore the Classic Context Menu, configure power-user Explorer views, disable Start Menu Recommendations, and remove the Explorer Gallery node[cite: 3].
+- **Software & Runtimes (Winget):** Perform global application upgrades, repair package manager indexes, and bulk-install core dependencies (Visual C++, DirectX, .NET 8 & 10)[cite: 3].
+
+### **User Experience & Logging** 📝
 - Detection for Windows Insider / Dev Builds
 - Consistent UI alignment using a unified multi-parameter toggle engine
 - Locale-independent ISO-8601 logging format (YYYY-MM-DD)
@@ -84,14 +90,14 @@
 | Feature | Description |
 |---------|-------------|
 | **Admin Check** | Automatically requests elevation and kills the background instance |
-| **First-Run EULA** | Requires acknowledgment of risks via zero-byte state marker on first launch |
+| **First-Run EULA** | Requires acknowledgement of risks via zero-byte state marker on first launch |
 | **Space Validation** | Skips heavy operations if <2GB free to prevent corruption |
 | **WMI Crash Guard** | Gracefully bypasses storage blocks if the system's WMI repository is corrupted |
 | **Backup Scripts** | Automatically backs up Registry, Firewall, and Network configs |
 | **Locked Files** | Bypasses in-use files without forced deletion |
 | **Transactional Rollbacks** | Reverts Safe Mode BCD boot flags if the restart command is blocked by the OS |
 | **Build Awareness** | Checks build versions to prevent running unsupported features |
-| **Native Exit Normalization** | Intercepts expected Windows exit codes (e.g., active CHKDSK volume locks) to prevent false-negative errors |
+| **Native Exit Normalisation** | Intercepts expected Windows exit codes (e.g., active CHKDSK volume locks) to prevent false-negative errors |
 
 ---
 
