@@ -2,25 +2,49 @@
 
 All notable changes to Primus will be documented in this file.
 
+## [1.4.0] - 2026-10-28
+
+### ✨ New Features
+
+**System UI & Apps Suite (NEW)**
+- ✅ Added a Windows 11 UI Tweaks module to toggle the Classic Context Menu, power-user File Explorer views, Start Menu recommendations, and Explorer Gallery clutter[cite: 2].
+- ✅ Added a Software & Runtimes (Winget) module to perform global app upgrades, repair package manager indexes, and bulk-deploy core system runtimes including Visual C++, DirectX, and .NET Desktop Runtimes 8 & 10[cite: 2].
+
+**Advanced Network Management (NEW)**
+- ✅ Added a comprehensive DNS Management module to instantly switch active network adapters between Cloudflare (Standard/Security/Family), Google, Quad9, AdGuard, and automatic DHCP[cite: 2].
+- ✅ Added a Network Tweaks & Latency module to safely configure QoS Reserved Bandwidth, Network Throttling, Receive Segment Coalescing (RSC), Nagle's Algorithm, NetBIOS over TCP/IP, and LLMNR Broadcasts[cite: 2].
+
+### 🔧 Updates & Refinements
+
+**Windows 11 26H2 Compatibility**
+- 🔧 **Gallery CLSID Override:** Updated the Explorer Gallery removal tweak to target the modern Windows 11 26H2 CLSID (`edcd0212c87c`) across both native and WOW6432 registry nodes[cite: 2].
+
+**Documentation**
+- 🔧 Updated Page 3 of the built-in Help & Information module to document the new System UI & Apps category and its Winget functionalities[cite: 2].
+
+
+---
+
 ## [1.3.2] - 2026-08-28
 
 ### ✨ New Features
 
 **Privacy & Telemetry Suite Expansion**
 - ✅ Added four brand-new telemetry toggles: Feedback Frequency & Prompts, Inking & Typing Personalisation, Tailored Experiences, and Location Tracking Services.
-- ✅ Reorganized the Privacy menu into a logical 10-option dual-column layout, categorised smoothly by Core OS Telemetry, User Behavior, and System Integration.
+- ✅ Reorganised the Privacy menu into a logical 10-option dual-column layout, categorised smoothly by Core OS Telemetry, User Behavior, and System Integration.
 
 ### 🐛 Bug Fixes
 
 **Edge Cases & Logic Traps**
-- 🐛 **CHKDSK False Negatives:** Normalized Windows' native Exit Code `3` as a success state to accurately report offline scan scheduling when targeting a locked, active OS volume (`%SystemDrive%`).
+- 🐛 **CHKDSK False Negatives:** Normalised Windows' native Exit Code `3` as a success state to accurately report offline scan scheduling when targeting a locked, active OS volume (`%SystemDrive%`).
 - 🐛 **WinSxS Parsing Error:** Resolved a nested-parentheses string parsing bug within the WinSxS Component Store Deep Image Reset module to prevent unhandled script crashes.
 
 ### 🔧 Updates & Refinements
 
-**Framework & Interface Standardization**
-- 🔧 Standardized interactive UI toggle menus across Privacy & Telemetry modules using the unified 4-parameter `:PROMPT_TOGGLE` global helper engine.
+**Framework & Interface Standardisation**
+- 🔧 Standardised interactive UI toggle menus across Privacy & Telemetry modules using the unified 4-parameter `:PROMPT_TOGGLE` global helper engine.
 - 🔧 Updated the built-in Help & Information module (Page 3) to accurately document the expanded privacy capabilities while ensuring pixel-perfect column indentation.
+
 
 ---
 
@@ -38,7 +62,8 @@ All notable changes to Primus will be documented in this file.
 ### 🔧 Updates & Refinements
 
 **UI Layout & Alignment**
-- 🔧 Reorganized the Deep System Cleanup menu from 10 to 16 options and adjusted column spacing to fit the menu properly.
+- 🔧 Reorganised the Deep System Cleanup menu from 10 to 16 options and adjusted column spacing to fit the menu properly.
+
 
 ---
 
@@ -63,14 +88,15 @@ All notable changes to Primus will be documented in this file.
 - 🐛 **Ghost Terminals:** Replaced top-level `exit /b` with a hard `exit` in the privilege escalation block to cleanly kill non-elevated parent terminals and prevent ghost windows.
 - 🐛 **CHKDSK False Positives:** Added strict `errorlevel` trapping to verify that offline file system repairs actually scheduled successfully before prompting the user to reboot.
 - 🐛 **WMI Storage Blocks:** Implemented a `$null` safeguard in the `CHECK_FREE_SPACE` engine to prevent false "low space" locks on systems with corrupted WMI repositories.
-- 🐛 **EULA File Optimization:** Replaced `echo.` with `type nul >` to write a pristine, 0-byte `.eula_accepted` state marker.
+- 🐛 **EULA File Optimisation:** Replaced `echo.` with `type nul >` to write a pristine, 0-byte `.eula_accepted` state marker.
 
 ### 🛡️ Safety & Refinements
 
 **Transactional Rollbacks & UX**
 - 🛡️ **Safe Mode Hijack Prevention:** Added a transactional rollback to the Defender Deep Clean module. If the OS blocks the restart command, the BCD `safeboot` flag is safely reverted to prevent unexpected Safe Mode loops.
-- 🔧 **Execution Speed:** Removed redundant `timeout` delays from synchronous service starts (e.g., System Restore VSS initialization).
+- 🔧 **Execution Speed:** Removed redundant `timeout` delays from synchronous service starts (e.g., System Restore VSS initialisation).
 - 🔧 **Exit Readability:** Extended the final application termination delay to 5 seconds to allow ample time to review the reclaimed space summary.
+
 
 ---
 
@@ -82,7 +108,7 @@ All notable changes to Primus will be documented in this file.
 - ✅ Updated the memory usage module to group processes by application.
 - ✅ Consolidates multi-process apps (e.g., Firefox, Discord) into single entries.
 - ✅ Added an "Instances" count to show active child process totals.
-- ✅ Standardized column alignment for better readability in the console.
+- ✅ Standardised column alignment for better readability in the console.
 - ✅ Implemented name truncation to keep the UI within window boundaries.
 
 **Multi-Browser Cleanup**
@@ -92,8 +118,8 @@ All notable changes to Primus will be documented in this file.
 
 ### 🔧 Updates & Refinements
 
-**Menu & Workflow Reorganization**
-- 🔧 Reorganized maintenance tasks into more logical categories:
+**Menu & Workflow Reorganisation**
+- 🔧 Reorganised maintenance tasks into more logical categories:
   - **General Cleanup**: Routine tasks (now includes Error Reports & Dumps).
   - **Deep System Cleanup**: Interactive tasks (now includes Disk Cleanup).
 - 🔧 Re-ordered script subroutines to match the UI flow for easier maintenance.
@@ -103,6 +129,7 @@ All notable changes to Primus will be documented in this file.
 - 🔧 Recalibrated margins (%M0% / %M1%) for consistent vertical symmetry.
 - 🔧 Simplified complex PowerShell modules into shorter, more efficient execution strings.
 - 🔧 Added a detection tag for Windows Insider / Dev Builds.
+
 
 ---
 
@@ -148,6 +175,7 @@ All notable changes to Primus will be documented in this file.
 - 🔧 Displays current compression state before the CompactOS menu.
 - 🔧 Improved service management to ensure dependencies are handled correctly.
 
+
 ---
 
 ## [1.1.0] - 2026-05-05
@@ -160,7 +188,7 @@ All notable changes to Primus will be documented in this file.
 - ✅ Schedule and cancel offline repairs.
 - ✅ Structured WinSxS reset process with built-in safety locks.
 
-**System Optimization**
+**System Optimisation**
 - ✅ SSD TRIM and HDD defragmentation (with drive type detection).
 - ✅ Memory analysis for top 10 processes.
 - ✅ Clear system clipboard and flush standby RAM cache.
@@ -171,6 +199,7 @@ All notable changes to Primus will be documented in this file.
 - ✅ Driver backups via DISM export.
 - ✅ Rebuild Windows Font Cache and DirectX shader cache.
 - ✅ Purge Windows.old with post-deletion verification.
+
 
 ---
 
@@ -185,6 +214,7 @@ All notable changes to Primus will be documented in this file.
 
 **Extended Browser Support**
 - ✅ Added support for Thorium, Helium, Floorp, and Zen browsers.
+
 
 ---
 
@@ -216,6 +246,7 @@ A personal collection of scripts for Windows 10/11 maintenance with built-in saf
 #### **🔧 System Repair**
 - ✅ System File Checker (SFC) and DISM health tools.
 
+
 ---
 
 ## Legend
@@ -233,4 +264,4 @@ A personal collection of scripts for Windows 10/11 maintenance with built-in saf
 
 **Project**: [Primus](https://github.com/R4in84/Primus)  
 **Author**: Chris Martin ([@R4in84](https://github.com/R4in84))  
-**License**: [MIT](LICENSE)
+**Licence**: [MIT](LICENSE)
